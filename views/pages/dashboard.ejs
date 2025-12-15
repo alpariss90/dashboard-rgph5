@@ -21,19 +21,19 @@
 
 
 <div class="row">
-	<div class="col-12">
-		<div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
-			<h4 class="mb-sm-0">Tableau de bord du RGPH-5</h4>
-			<div class="page-title-right">
-				<ol class="breadcrumb m-0">
-					<li class="breadcrumb-item active">Indicateurs</li>
-				</ol>
-
-			</div>
+<div class="col-12">
+	<div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+		<h4 class="mb-sm-0">Tableau de bord du RGPH-5</h4>
+		<div class="page-title-right">
+			<ol class="breadcrumb m-0">
+				<li class="breadcrumb-item active">Indicateurs</li>
+			</ol>
 
 		</div>
+
 	</div>
-	<div class="col-12">
+</div>
+<div class="col-12">
   <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent p-3 rounded shadow-sm">
     <div class="row g-3 w-100">
       
@@ -62,10 +62,9 @@
   </div>
   
   <!-- Département -->
-  <!-- Département -->
 <div class="col-3">
   <label>Département</label>
-  <% if (user.canChangeDepartement) { %>  <!-- CHANGER canChangeRegion EN canChangeDepartement -->
+  <% if (user.canChangeDepartement) { %>
     <select id="departement" class="form-select">
       <option value="">-- Sélectionner --</option>
     </select>
@@ -113,8 +112,6 @@
     </div>
   </div>
 </div>
-</div></div>
-
 <div class="row">
 <div class="col-xl-12">
 	<div class="card crm-widget">
@@ -557,25 +554,27 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const statsSpans = {
-    menEnumeresSpan: 'menagesEnumeres',
-    menDenombresSpan: 'menagesDenombres',
-    totalHommesSpan: 'hommes',
-    totalFemmesSpan: 'femmes',
-    popTotaleSpan: 'total',
-    popCartoSpan: 'cartographie',
-    popRuraleSpan: 'populationRurale',
-    enmcdPop: 'enmcd.ecart',
-    tauxProgressionSpan: 'tauxProgressionCollecte',
-    tmoyenMenSpan: 'tailleMoyenneMenage',
-    rraviSpan: 'RRAVI',
-    rMasculiniteSpan: 'rapportMasculinite',
-    pa49Span: 'PA49',
-    decesSpan: 'averageDeces',
-    agriSpan: 'proportionAgricoles',
+    menEnumeresSpan: 'mainStats.menagesEnumeres',
+    menDenombresSpan: 'mainStats.menagesDenombres',
+	  decesSpan: 'mainStats.averageDeces',
+	  popCartoSpan: 'mainStats.cartographie',
+    tauxProgressionSpan: 'mainStats.tauxProgressionCollecte',
+	  tmoyenMenSpan: 'mainStats.tailleMoyenneMenage',
+	  enmcdPop: 'mainStats.enmcd.ecart',
+	  grandMenagesSpan: 'mainStats.nbMenagesPlus10',
+    menagesSoloSpan: 'mainStats.nbMenagesSolo',
+    popRuraleSpan: 'mainStats.populationRurale',
+
+    popTotaleSpan: 'populationStats.total',
+    totalHommesSpan: 'populationStats.hommes',
+    totalFemmesSpan: 'populationStats.femmes',
+    enfantSpan: 'populationStats.proportionEnfantsMoins5',
+    rraviSpan: 'populationStats.RRAVI',
+    rMasculiniteSpan: 'populationStats.rapportMasculinite',
+    pa49Span: 'populationStats.PA49',
+
     emigreSpan: 'averageEmigres',
-    enfantSpan: 'proportionEnfantsMoins5',
-    grandMenagesSpan: 'nbMenagesPlus10',
-    menagesSoloSpan: 'nbMenagesSolo'
+    agriSpan: 'proportionAgricoles',
   };
 
   const optionsCache = {};
@@ -723,12 +722,19 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('📊 PARAMS pour stats:', paramsObj);
       const data = await fetchStats(paramsObj);
 
+	  // 💡 AJOUTEZ CETTE LIGNE
+  console.log('✅ DONNÉES STATS REÇUES:', data);
+  console.log("Structure mainStats (Filtre):", data.mainStats);
+console.log("Structure populationStats (Filtre):", data.populationStats);
+
       // Mettre à jour tous les spans
       Object.entries(statsSpans).forEach(([spanId, dataKey]) => {
         const element = document.getElementById(spanId);
         if (!element) return;
         
         let value = data;
+
+		console.log(`[MAP] ${dataKey} => SPAN ${spanId}:`, value);
         if (dataKey.includes('.')) {
           const keys = dataKey.split('.');
           keys.forEach(key => {
@@ -760,6 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       hideLoader();
     }
+    
   }
 
   const debouncedUpdateStats = debounce(updateStats, 200);
@@ -900,14 +907,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fonction d'initialisation principale
   async function initializeDashboard() {
-    const regionCode = getSelectValue('region');
-    const deptCode = getSelectValue('departement');
-    const communeCode = getSelectValue('commune');
-    
-    console.log('🔍 Codes initiaux - Région:', regionCode, 'Département:', deptCode, 'Commune:', communeCode);
-    console.log('👤 Rôle utilisateur:', userRole);
-    
+    const userRole = '<%= user.role %>';
+    console.log('👤 ROLE_GLOBAL initialisation...');
     try {
+      // ===== ROLE_GLOBAL : Charger toutes les régions et stats nationales =====
+      if (userRole === 'ROLE_GLOBAL') {
+        console.log('📊 Initialisation stats nationales ROLE_GLOBAL');
+        // updateStats();  <--- Supprimer ou commenter cette ligne.
+
+        // 1. Charger les régions dans le select
+        if (isActiveSelect(selects.region)) {
+          if (selects.region.options.length <= 1) {
+            await loadOptions('/api/location/regions', selects.region, 'code_region', 'region');
+          }
+        }
+        
+        // 2. Vider les autres selects
+        if (isActiveSelect(selects.departement)) {
+          selects.departement.innerHTML = '<option value="">-- Sélectionner --</option>';
+          selects.departement.disabled = false;
+        }
+        if (isActiveSelect(selects.commune)) {
+          selects.commune.innerHTML = '<option value="">-- Sélectionner --</option>';
+          selects.commune.disabled = false;
+        }
+        if (isActiveSelect(selects.zd)) {
+          selects.zd.innerHTML = '<option value="">-- Sélectionner --</option>';
+          selects.zd.disabled = false;
+        }
+        
+        // 3. Charger LES STATS GLOBALES (sans filtres) UNE SEULE FOIS
+        await updateStats(); // <--- Assurez-vous qu'il est ici et qu'il est attendu (await) si possible.
+
+        console.log('✅ ROLE_GLOBAL : Stats nationales chargées');
+        return; // On sort pour ROLE_GLOBAL
+      }
+      
+      // ===== LOGIQUE POUR LES AUTRES RÔLES (garder le code existant) =====
+      const regionCode = getSelectValue('region');
+      const deptCode = getSelectValue('departement');
+      const communeCode = getSelectValue('commune');
+      
+      console.log('🔍 Codes initiaux - Région:', regionCode, 'Département:', deptCode, 'Commune:', communeCode);
+      console.log('👤 Rôle utilisateur:', userRole);
+      
+      
+      
       // ===== ROLE_GLOBAL : Précharger les régions =====
       if (userRole === 'ROLE_GLOBAL' && isActiveSelect(selects.region)) {
         if (selects.region.options.length <= 1) { // Juste l'option vide
@@ -1022,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await updateStats();
       
       // Initialiser Select2
-      initializeSelect2();
+      
       
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation:', error);
@@ -1035,13 +1080,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 100);
 });
 </script>
-
-
-
-
-
-
-
-
-
-

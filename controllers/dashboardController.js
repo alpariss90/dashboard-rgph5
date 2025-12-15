@@ -203,11 +203,12 @@ exports.getStats = async (req, res) => {
 
     let stats;
 
-    if (statsCache[cacheKey]) {
+    if (statsCache[cacheKey] && statsCache[cacheKey].pyramideAges) {
+      console.log('📦 Cache hit (Complet avec Pyramide)');
       stats = statsCache[cacheKey];
     } else {
-      // Exécuter toutes les requêtes lourdes en parallèle AVEC l'utilisateur
-      // Passez les filtres finaux qui sont désormais garantis d'être soit une valeur valide, soit null.
+      console.log('🔄 Cache miss ou incomplet - Recalcul des données...');
+      
       const [mainStats, populationStats, proportionAgricoles, averageEmigres, pyramideAges] = await Promise.all([
         menageService.getMainStats(finalFilters, user),
         menageService.getPopulationStatsCombined(finalFilters, user),
@@ -221,14 +222,14 @@ exports.getStats = async (req, res) => {
         populationStats,
         proportionAgricoles,
         averageEmigres,
-        pyramideAges
+        pyramideAges // Elle sera bien incluse ici
       };
 
-      // Stocker dans le cache
+      // Mise à jour du cache
       statsCache[cacheKey] = stats;
-      // Votre gestion du cache avec setTimeout est correcte.
       setTimeout(() => delete statsCache[cacheKey], 5 * 60 * 1000); 
     }
+    
     res.json(stats);
   } catch (err) {
     console.error('Erreur getStats:', err);

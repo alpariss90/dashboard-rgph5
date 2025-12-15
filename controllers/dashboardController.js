@@ -2,14 +2,54 @@
 // Utiliser le service optimisé avec Redis cache
 const menageService = require('../services/menageServiceUltraFast');
 
+
+function normalizeFilterValue(value) {
+    if (value === null || value === undefined) {
+        return null;
+    }
+    const trimmed = String(value).trim();
+    return trimmed === '' ? null : trimmed;
+}
+
+// Nouvelle fonction pour nettoyer l'objet filtres
+function cleanFilters(filters) {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(filters)) {
+        const normalized = normalizeFilterValue(value);
+        if (normalized !== null) {
+            cleaned[key] = normalized;
+        }
+    }
+    return cleaned;
+}
+
 // Cache simple en mémoire pour stats (expire au bout de 5 minutes)
 const statsCache = {};
 const chartsCache = {};
 
 // Générer une clé unique pour le cache selon les filtres ET l'utilisateur
 function getCacheKey(filters, user = null) {
-  const userKey = user ? `${user.id}-${user.role}` : 'no-user';
-  return `${userKey}-${JSON.stringify(filters)}`;
+  const userKey = user ? `${user.id}_${user.role}` : 'nouser';
+  
+  // 💡 ÉTAPE 1 : Nettoyer les filtres ici aussi pour assurer la cohérence
+  const cleanedFilters = cleanFilters(filters);
+  
+  // Pour ROLE_GLOBAL sans filtres, créer une clé spécifique "national"
+  const isGlobalView = user && user.role === 'ROLE_GLOBAL' && 
+    !cleanedFilters.region && !cleanedFilters.departement && !cleanedFilters.commune && !cleanedFilters.zd;
+    
+  if (isGlobalView) {
+    return `global:national:${userKey}`;
+  }
+  
+  // 💡 ÉTAPE 2 : Générer la clé à partir des filtres nettoyés
+  const filterKey = Object.entries(cleanedFilters) // Utilisation de cleanedFilters
+    // Note: Plus besoin de filtrer les null/undefined/'' car cleanFilters le fait déjà
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}:${v}`)
+    .join('_') || 'all';
+  
+  return `filters:${userKey}:${filterKey}`;
 }
 
 // Page Dashboard
@@ -44,25 +84,32 @@ exports.showDashboard = async (req, res) => {
       filters.zd = null; // Toujours null par défaut
     }
 
-    const cacheKey = getCacheKey(filters, user);
+    // REMPLACER le bloc de chargement des stats par :
 
-    let mainStats, populationStats, proportionAgricoles, averageEmigres;
+const cacheKey = getCacheKey(filters, user);
 
-    if (statsCache[cacheKey]) {
-      ({ mainStats, populationStats, proportionAgricoles, averageEmigres } = statsCache[cacheKey]);
-    } else {
-      // 4. Exécuter les requêtes statistiques AVEC l'utilisateur pour filtrage automatique
-      [mainStats, populationStats, proportionAgricoles, averageEmigres] = await Promise.all([
-        menageService.getMainStats(filters, user),
-        menageService.getPopulationStatsCombined(filters, user),
-        menageService.getProportionMenagesAgricoles(filters, user),
-        menageService.getAverageEmigresPerMenage(filters, user)
-      ]);
+// Toujours essayer le cache d'abord
+let mainStats, populationStats, proportionAgricoles, averageEmigres;
 
-      // Stocker dans le cache
-      statsCache[cacheKey] = { mainStats, populationStats, proportionAgricoles, averageEmigres };
-      setTimeout(() => delete statsCache[cacheKey], 5 * 60 * 1000); // 5 minutes
-    }
+if (statsCache[cacheKey]) {
+  ({ mainStats, populationStats, proportionAgricoles, averageEmigres } = statsCache[cacheKey]);
+  console.log(`📦 Stats chargées depuis le cache mémoire (clé: ${cacheKey})`);
+} else {
+  // Pour ROLE_GLOBAL sans filtres, forcer le chargement national
+  const filtersForQuery = user.role === 'ROLE_GLOBAL' ? {
+    region: null, departement: null, commune: null, zd: null
+  } : filters;
+  
+  [mainStats, populationStats, proportionAgricoles, averageEmigres] = await Promise.all([
+    menageService.getMainStats(filtersForQuery, user),
+    menageService.getPopulationStatsCombined(filtersForQuery, user),
+    menageService.getProportionMenagesAgricoles(filtersForQuery, user),
+    menageService.getAverageEmigresPerMenage(filtersForQuery, user)
+  ]);
+
+  statsCache[cacheKey] = { mainStats, populationStats, proportionAgricoles, averageEmigres };
+  setTimeout(() => delete statsCache[cacheKey], 5 * 60 * 1000);
+}
 
     // 5. Récupérer les listes pour les filtres AVEC restriction par rôle
     const [regions, departements, communes, zds] = await Promise.all([
@@ -127,19 +174,32 @@ exports.showDashboard = async (req, res) => {
 exports.getStats = async (req, res) => {
   try {
     const user = req.session.user;
-    const filters = {
-      region: req.query.region || null,
-      departement: req.query.departement || null,
-      commune: req.query.commune || null,
-      zd: req.query.zd || null
+    
+    // 1. Initialiser les filtres bruts (en utilisant la valeur du query, même si c'est "")
+     let filters = {
+      region: req.query.region,
+      departement: req.query.departement,
+      commune: req.query.commune,
+      zd: req.query.zd
     };
 
-    // Validation des filtres pour cet utilisateur
-    if (!hasAccessToFilters(user, filters)) {
+    // 2. Nettoyer les filtres. 
+    //    Si la valeur est "" (venant de -- Sélectionner --), elle devient null.
+    let cleanedFilters = cleanFilters(filters);
+
+    // 3. Appliquer les restrictions du rôle (si nécessaire).
+    //    Ceci va remplacer les valeurs nulles par la restriction de l'utilisateur.
+    //    Exemple: Si user est REGIONAL 1, et region est null, region devient '1'.
+    //    Utilisez cleanedFilters pour que initializeFiltersForRole voie les 'null' corrects.
+    const finalFilters = initializeFiltersForRole(user, cleanedFilters);
+
+    // 4. Validation finale des filtres
+    if (!hasAccessToFilters(user, finalFilters)) {
       return res.status(403).json({ error: 'Accès non autorisé à ce territoire' });
     }
 
-    const cacheKey = getCacheKey(filters, user);
+    // 5. Utiliser les filtres finaux pour le cache (qui seront nulls pour Global/National)
+    const cacheKey = getCacheKey(finalFilters, user);
 
     let stats;
 
@@ -147,17 +207,18 @@ exports.getStats = async (req, res) => {
       stats = statsCache[cacheKey];
     } else {
       // Exécuter toutes les requêtes lourdes en parallèle AVEC l'utilisateur
+      // Passez les filtres finaux qui sont désormais garantis d'être soit une valeur valide, soit null.
       const [mainStats, populationStats, proportionAgricoles, averageEmigres, pyramideAges] = await Promise.all([
-        menageService.getMainStats(filters, user),
-        menageService.getPopulationStatsCombined(filters, user),
-        menageService.getProportionMenagesAgricoles(filters, user),
-        menageService.getAverageEmigresPerMenage(filters, user),
-        menageService.getPyramideAges(filters, user)
+        menageService.getMainStats(finalFilters, user),
+        menageService.getPopulationStatsCombined(finalFilters, user),
+        menageService.getProportionMenagesAgricoles(finalFilters, user),
+        menageService.getAverageEmigresPerMenage(finalFilters, user),
+        menageService.getPyramideAges(finalFilters, user)
       ]);
 
       stats = {
-        ...mainStats,
-        ...populationStats,
+        mainStats,
+        populationStats,
         proportionAgricoles,
         averageEmigres,
         pyramideAges
@@ -165,7 +226,8 @@ exports.getStats = async (req, res) => {
 
       // Stocker dans le cache
       statsCache[cacheKey] = stats;
-      setTimeout(() => delete statsCache[cacheKey], 5 * 60 * 1000);
+      // Votre gestion du cache avec setTimeout est correcte.
+      setTimeout(() => delete statsCache[cacheKey], 5 * 60 * 1000); 
     }
     res.json(stats);
   } catch (err) {
@@ -173,7 +235,6 @@ exports.getStats = async (req, res) => {
     res.status(500).json({ error: 'Erreur lors du calcul des statistiques.' });
   }
 };
-
 // Page Charts
 exports.showCharts = async (req, res) => {
   try {

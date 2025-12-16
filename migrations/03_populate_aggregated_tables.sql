@@ -24,6 +24,7 @@ UPDATE stats_nationales SET
     menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm13 = 1),
     population_carto = (SELECT COALESCE(SUM(xm20), 0) FROM tmenage),
     population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
+    average_deces = (SELECT COALESCE(AVG(xm41), 0) FROM tmenage),
     
     -- Stats population
     hommes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 1),
@@ -59,7 +60,7 @@ INSERT INTO stats_par_region (
     population_carto, population_collectee,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, average_deces
 )
 SELECT 
     m.code_region,
@@ -73,6 +74,7 @@ SELECT
     SUM(CASE WHEN m.xm13 = 1 THEN 1 ELSE 0 END) AS menages_denombres,
     COALESCE(SUM(m.xm20), 0) AS population_carto,
     COALESCE(SUM(m.xm40), 0) AS population_collectee,
+    COALESCE(AVG(m.xm41), 0) AS average_deces,
     
     (SELECT COUNT(*) FROM tcaracteristique c 
      INNER JOIN tmenage m2 ON m2.`level-1-id` = c.`level-1-id` 
@@ -134,7 +136,7 @@ INSERT INTO stats_par_departement (
     population_carto, population_collectee,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, average_deces
 )
 SELECT 
     m.code_region,
@@ -149,6 +151,7 @@ SELECT
     SUM(CASE WHEN m.xm13 = 1 THEN 1 ELSE 0 END) AS menages_denombres,
     COALESCE(SUM(m.xm20), 0) AS population_carto,
     COALESCE(SUM(m.xm40), 0) AS population_collectee,
+    COALESCE(AVG(m.xm41), 0) AS average_deces,
     
     (SELECT COUNT(*) FROM tcaracteristique c 
      INNER JOIN tmenage m2 ON m2.`level-1-id` = c.`level-1-id` 
@@ -210,7 +213,7 @@ INSERT INTO stats_par_commune (
     population_carto, population_collectee,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, average_deces
 )
 SELECT 
     m.code_region,
@@ -226,6 +229,7 @@ SELECT
     SUM(CASE WHEN m.xm13 = 1 THEN 1 ELSE 0 END) AS menages_denombres,
     COALESCE(SUM(m.xm20), 0) AS population_carto,
     COALESCE(SUM(m.xm40), 0) AS population_collectee,
+    COALESCE(AVG(m.xm41), 0) AS average_deces,
     
     (SELECT COUNT(*) FROM tcaracteristique c 
      INNER JOIN tmenage m2 ON m2.`level-1-id` = c.`level-1-id` 
@@ -289,7 +293,7 @@ INSERT INTO stats_par_zd (
     population_carto, population_collectee,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, average_deces
 )
 SELECT 
     m.code_region,
@@ -305,6 +309,7 @@ SELECT
     SUM(CASE WHEN m.xm13 = 1 THEN 1 ELSE 0 END) AS menages_denombres,
     COALESCE(SUM(m.xm20), 0) AS population_carto,
     COALESCE(SUM(m.xm40), 0) AS population_collectee,
+    COALESCE(AVG(m.xm41), 0) AS average_deces,
     
     -- Sous-requêtes corrélées (optimisées par index)
     (SELECT COUNT(*) FROM tcaracteristique c 

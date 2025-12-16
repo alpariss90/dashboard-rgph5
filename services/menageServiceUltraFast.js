@@ -152,7 +152,7 @@ async function getMainStats(filters = {}, user = null) {
     return {
       totalMenages: Number(row.total_menages || 0),
       totalPopulation: Number(row.total_population || 0),
-      averageDeces: 0,
+      averageDeces: Number(row.average_deces || 0),
       nbMenagesPlus10: Number(row.nb_menages_plus_10 || 0),
       nbMenagesSolo: Number(row.nb_menages_solo || 0),
       populationRurale: Number(row.population_rurale || 0),

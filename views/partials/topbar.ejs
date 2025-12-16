@@ -42,8 +42,9 @@
                         <span class="d-flex align-items-center">
                             
                             <span class="text-start ms-xl-2">
-                                <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">Nom et Prénom</span>
-                                <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Rôle</span>
+                                <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text"><%=  user.nom.toUpperCase() %></span>
+                                <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text"><%= user.prenom.toUpperCase() %></span>
+                                <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text"><%= user.role.substring(5) %></span>
                             </span>
                         </span>
                     </button>

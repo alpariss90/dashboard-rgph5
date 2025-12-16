@@ -23,6 +23,9 @@
                 <ol class="breadcrumb m-0">
                     <li class="breadcrumb-item active">Visualisation</li>
                 </ol>
+                <button id="refreshAll" class="btn btn-sm btn-outline-primary ms-3" title="Rafraîchir les données">
+    <i class="ri-refresh-line"></i> Rafraîchir
+  </button>
             </div>
         </div>
     </div>
@@ -141,6 +144,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        SmartCache.clear();
+  if (typeof optionsCache !== 'undefined') Object.keys(optionsCache).forEach(k => delete optionsCache[k]);
+  if (typeof statsCache !== 'undefined') Object.keys(statsCache).forEach(k => delete statsCache[k]);
         // --- 1. CONFIGURATION DOM ---
         const selects = {
             region: document.getElementById('region'),

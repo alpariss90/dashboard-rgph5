@@ -23,6 +23,9 @@
                 <ol class="breadcrumb m-0">
                     <li class="breadcrumb-item active">Visualisation</li>
                 </ol>
+                <button id="refreshAll" class="btn btn-sm btn-outline-primary ms-3" title="Rafraîchir les données">
+    <i class="ri-refresh-line"></i> Rafraîchir
+  </button>
             </div>
         </div>
     </div>
@@ -141,14 +144,17 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- 1. CONFIGURATION DOM ---
+  // SÉCURITÉ : SmartCache
+        if (typeof SmartCache !== 'undefined') SmartCache.clear();
+
         const selects = {
             region: document.getElementById('region'),
             departement: document.getElementById('departement'),
             commune: document.getElementById('commune'),
             zd: document.getElementById('zd')
         };
-
+        
+        let charts = { pyramide: null, gender: null, progression: null };
         const isActiveSelect = (element) => element && element.tagName === 'SELECT';
 
         const getSelectValue = (elementId) => {
@@ -160,11 +166,6 @@
         const optionsCache = {};
         
         // --- 2. INSTANCES CHART.JS ---
-        let charts = {
-            pyramide: null,
-            gender: null,
-            progression: null
-        };
 
         // --- 3. UTILITAIRES ---
         const showLoader = () => {
@@ -256,27 +257,25 @@
                     commune: getSelectValue('commune'),
                     zd: getSelectValue('zd')
                 };
+                console.log('📊 Charts - Paramètres:', paramsObj);
 
-                console.log('📊 Requête API avec filtres:', paramsObj);
-                const data = await fetchStats(paramsObj);
+                // Appel API
+                const url = `/stats?` + new URLSearchParams(Object.fromEntries(Object.entries(paramsObj).filter(([_, v]) => v))).toString();
+                const response = await fetch(url);
+                const data = await response.json();
 
                 if (data) {
-                    console.log("✅ Données reçues:", Object.keys(data));
+                    // Vérification des clés pour Pyramide
+                    // Supporte les deux formats possibles (pyramideAges ou pyramideData)
+                    const pyraData = data.pyramideAges || data.pyramideData || [];
+                    console.log("Données Pyramide reçues:", pyraData.length, "entrées");
                     
-                    // Sécurisation : Vérification des clés possibles
-                    // Le contrôleur renvoie parfois 'pyramideAges' ou 'pyramideData' selon la version
-                    const pyramideData = data.pyramideAges || data.pyramideData || [];
-                    const popData = data.populationStats || {};
-                    const mainData = data.mainStats || {};
-
-                    updatePyramideChart(pyramideData);
-                    updateGenderChart(popData);
-                    updateProgressionChart(mainData);
-                } else {
-                    console.warn("⚠️ Aucune donnée reçue de l'API");
+                    updatePyramideChart(pyraData);
+                    updateGenderChart(data.populationStats || {});
+                    updateProgressionChart(data.mainStats || {});
                 }
             } catch (err) {
-                console.error('Erreur critique updateCharts:', err);
+                console.error('Erreur updateCharts:', err);
             } finally {
                 hideLoader();
             }
@@ -323,12 +322,12 @@
                             {
                                 label: 'Hommes',
                                 data: hommes,
-                                backgroundColor: 'rgba(18,165,55,0.8)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
                             },
                             {
                                 label: 'Femmes',
                                 data: femmes,
-                                backgroundColor: 'rgba(242,143,0,0.8)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
                             }
                         ]
                     },
@@ -381,7 +380,7 @@
                         labels: ['Hommes', 'Femmes'],
                         datasets: [{
                             data: [hommes, femmes],
-                            backgroundColor: ['#12A537', '#F28F00']
+                            backgroundColor: ['#36A2EB', '#FF6384']
                         }]
                     },
                     options: {
@@ -414,7 +413,7 @@
                         labels: [`Collectée (${pCt}%)`, 'Reste à faire'],
                         datasets: [{
                             data: [collectee, restant],
-                            backgroundColor: ['#12A537', '#F28F00']
+                            backgroundColor: ['#4BC0C0', '#E7E9ED']
                         }]
                     },
                     options: {
@@ -512,6 +511,11 @@
             }
         }
 
-        setTimeout(initializePage, 100);
+setTimeout(() => {
+            // Charger les options initiales si nécessaire (ROLE_GLOBAL)
+            // Puis updateCharts()
+            initializePage();
+            updateCharts(); 
+        }, 100);
     });
 </script>

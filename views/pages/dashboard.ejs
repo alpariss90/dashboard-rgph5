@@ -28,6 +28,9 @@
 			<ol class="breadcrumb m-0">
 				<li class="breadcrumb-item active">Indicateurs</li>
 			</ol>
+      <button id="refreshAll" class="btn btn-sm btn-outline-primary ms-3" title="Rafraîchir les données">
+    <i class="ri-refresh-line"></i> Rafraîchir
+  </button>
 
 		</div>
 
@@ -527,10 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
     region: document.getElementById('region'),
     departement: document.getElementById('departement'),
     commune: document.getElementById('commune'),
-    zd: document.getElementById('zd')
+    zd: document.getElementById('zd'),
+    refreshBtn: document.getElementById('refreshAll')
   };
-
-  console.log('📌 Éléments DOM:', selects);
+  
+  console.log('📌 Dashboard Initialisé. Éléments:', selects);
 
   // ✅ Vérifie si c'est un select actif
   const isActiveSelect = (element) => {
@@ -797,6 +801,29 @@ console.log("Structure populationStats (Filtre):", data.populationStats);
         await loadOptions(`/api/location/departements?region=${selects.region.value}`, 
                           selects.departement, 'code_departement', 'departement');
       }
+
+      if (selects.refreshBtn) {
+  selects.refreshBtn.addEventListener('click', async () => {
+    console.log('🔄 Rafraîchissement forcé demandé');
+    
+    showLoader();
+    
+    // 1. Vider tous les caches client
+    Object.keys(optionsCache).forEach(k => delete optionsCache[k]);
+    Object.keys(statsCache).forEach(k => delete statsCache[k]);
+    
+    // 2. Forcer le rechargement des données
+    await updateStats();
+    
+    // 3. Recharger les options si nécessaire
+    if (isActiveSelect(selects.region) && selects.region.value) {
+      await loadOptions(`/api/location/departements?region=${selects.region.value}`, 
+                       selects.departement, 'code_departement', 'departement');
+    }
+    
+    hideLoader();
+  });
+}
       
       debouncedUpdateStats();
     });

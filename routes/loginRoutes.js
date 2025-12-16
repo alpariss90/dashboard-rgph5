@@ -190,6 +190,8 @@ router.post('/login', async (req, res) => {
                 req.session.user = {
                     id: updatedUser.id,
                     username: updatedUser.username,
+                    nom: user.nom,
+                    prenom: user.prenom,
                     role: updatedUser.role || updatedUser.roles[0],
                     firstConnect: user.firstConnect
                 };
@@ -201,6 +203,8 @@ router.post('/login', async (req, res) => {
             req.session.user = {
                 id: user.id,
                 username: user.username,
+                nom: user.nom,
+                prenom: user.prenom,
                 role: user.role || user.roles[0],
                 code: user.code,
                 regionCode: user.code && user.code.length >= 1 ? user.code.substring(0, 1) : null,

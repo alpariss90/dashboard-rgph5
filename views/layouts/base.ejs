@@ -27,6 +27,7 @@
 </head>
 
 <body>
+    
     <div id="layout-wrapper">
         <%- include('../partials/topbar') %>
         <%- include('../partials/sidebar') %>
@@ -71,6 +72,24 @@ $(document).ready(function() {
     width: '100%' // important pour le responsive
   });
 });
+</script>
+
+<script>
+/* ---- mise en surbrillance du menu ---- */
+(function highlightMenu(){
+    /* 1) on récupère le chemin sans les query-string / hash */
+    const path = location.pathname;          // ex:  "/charts"
+
+    /* 2) on parcourt tous les liens du menu */
+    document.querySelectorAll('#navbar-nav .nav-link').forEach(link => {
+        /* 3) on compare le href du lien avec l’URL courante */
+        if (link.getAttribute('href') === path) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+})();
 </script>
 </body>
 </html>

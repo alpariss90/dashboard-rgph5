@@ -3012,7 +3012,7 @@ File: Main Css File
 .navbar-menu {
   width: var(--vz-vertical-menu-width);
   z-index: 1002;
-  background: var(--vz-vertical-menu-bg);
+  background: rgba(18,165,55,0.8) !important;
   border-left: 1px solid var(--vz-vertical-menu-border);
   bottom: 0;
   margin-top: 0;
@@ -3433,7 +3433,7 @@ File: Main Css File
   width: var(--vz-vertical-menu-width-sm);
   z-index: 1;
   top: 0;
-  background-color: var(--vz-vertical-menu-bg);
+  background-color: rgba(18,165,55,0.8) !important;
 }
 :is([data-layout=vertical], [data-layout=semibox])[data-sidebar-size=sm] .logo span.logo-lg {
   display: none;
@@ -3495,7 +3495,7 @@ File: Main Css File
   width: calc(200px + var(--vz-vertical-menu-width-sm));
   -webkit-transition: none;
   transition: none;
-  background: var(--vz-vertical-menu-bg);
+  background: rgba(18,165,55,0.8) !important;
 }
 :is([data-layout=vertical], [data-layout=semibox])[data-sidebar-size=sm] .navbar-menu .navbar-nav .nav-item:hover > a.menu-link .icon-dual {
   fill: rgba(255, 255, 255, 0.16);
@@ -3518,7 +3518,7 @@ File: Main Css File
   right: var(--vz-vertical-menu-width-sm);
   position: absolute;
   width: 200px;
-  background: var(--vz-vertical-menu-bg);
+  background: rgba(18,165,55,0.8) !important;
   height: auto !important;
   padding: 0.5rem 0;
   border-radius: 0 0 3px 3px;
@@ -3624,7 +3624,7 @@ File: Main Css File
     top: calc(70px + var(--vz-grid-gutter-width));
     bottom: var(--vz-grid-gutter-width);
     padding: 0;
-    border-left: var(--vz-vertical-menu-bg);
+    border-left: rgba(18,165,55,0.8) !important;
     border-radius: 5px;
     padding: 10px 0;
     z-index: 1;

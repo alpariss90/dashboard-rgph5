@@ -15,7 +15,8 @@ exports.listUsers = async (req, res) => {
         const users = await User.findAll();
         res.render('pages/registerForm', {
             title: 'Gestion des utilisateurs',
-            users
+            users,
+            user:req.session.user
         });
     } catch (error) {
         req.session.error = 'Erreur lors du chargement des utilisateurs : ' + error.message;
@@ -32,6 +33,7 @@ exports.addUser = async (req, res) => {
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
             req.session.error = 'Cet email est déjà utilisé.';
+            req.session.user;
             return res.redirect('/users');
         }
 
@@ -49,6 +51,7 @@ exports.addUser = async (req, res) => {
         });
 
         req.session.success = 'Utilisateur créé avec succès !';
+        req.session.user;
         res.redirect('/users');
     } catch (error) {
         req.session.error = 'Erreur lors de la création de l\'utilisateur : ' + error.message;

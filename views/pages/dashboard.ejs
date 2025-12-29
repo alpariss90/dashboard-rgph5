@@ -496,6 +496,53 @@
 	<!-- end card -->
   
 </div>
+<div class="row mt-4">
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Niger Régions</h4>
+            </div>
+            <div class="card-body">
+                <div class="map-controls mb-3">
+                    <button id="showRegions" class="btn btn-primary">Régions</button>
+                    <button id="hideRegions" class="btn btn-outline-primary">Masquer</button>
+                </div>
+                <div id="map-regions" class="map-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Niger Départements</h4>
+            </div>
+            <div class="card-body">
+                <div class="map-controls mb-3">
+                    <button id="showDepartements" class="btn btn-secondary">Départements</button>
+                    <button id="hideDepartements" class="btn btn-outline-secondary">Masquer</button>
+                </div>
+                <div id="map-departements" class="map-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .map-container {
+        height: 400px;
+        width: 100%;
+        border-radius: 6px;
+        z-index: 1;
+    }
+    
+    .map-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+</style>
+
 <!-- end col --></div><!-- end row -->
 
 <script>
@@ -1110,3 +1157,563 @@ async function updateStats() {
   }, 100);
 });
 </script>
+<script>  
+// Déclarer les variables globales
+let regionsMap = null;
+let departementsMap = null;
+let regionLayer = null;
+let departementLayer = null;
+let currentRegionData = null;
+let currentDepartementData = null;
+
+// Fonction pour créer une carte avec fond uni (SANS données géographiques)
+function createCleanMap(containerId, backgroundColor = '#f8fafc', center = [17.6078, 8.0817], zoom = 5) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('❌ Conteneur non trouvé:', containerId);
+        return null;
+    }
+    
+    // Vider le conteneur au cas où
+    container.innerHTML = '';
+    
+    // Appliquer le style de fond au conteneur
+    container.style.backgroundColor = backgroundColor;
+    container.style.border = '1px solid #e2e8f0';
+    container.style.borderRadius = '8px';
+    container.style.overflow = 'hidden';
+    container.style.position = 'relative';
+    
+    try {
+        console.log('🗺️ Création de carte propre:', containerId);
+        
+        // Créer la carte avec options minimales
+        const map = L.map(containerId, {
+            center: center,
+            zoom: zoom,
+            zoomControl: true,
+            attributionControl: false, // Désactiver COMPLÈTEMENT l'attribution
+            scrollWheelZoom: true,
+            // Désactiver les animations pour plus de fluidité
+            fadeAnimation: false,
+            markerZoomAnimation: false,
+            // Options pour éviter les tuiles
+            preferCanvas: true,
+            // Désactiver autres contrôles
+            boxZoom: false,
+            doubleClickZoom: false,
+            dragging: true,
+            touchZoom: true,
+            keyboard: false
+        });
+        
+        // NE PAS ajouter de L.tileLayer - pas de fond de carte!
+        
+        // Retarder la gestion des contrôles pour éviter l'erreur
+        setTimeout(() => {
+            if (map.attributionControl) {
+                map.attributionControl.setPrefix('');
+                map.attributionControl.remove();
+            }
+        }, 100);
+        
+        console.log('✅ Carte propre créée:', containerId);
+        return map;
+        
+    } catch (error) {
+        console.error('❌ Erreur création carte:', containerId, error);
+        
+        // Fallback: afficher un message d'erreur simple
+        container.innerHTML = `
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                color: #718096;
+                font-family: sans-serif;
+            ">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🗺️</div>
+                    <div style="font-weight: 500; margin-bottom: 5px;">Carte en chargement...</div>
+                    <div style="font-size: 12px; color: #a0aec0;">${error.message || ''}</div>
+                </div>
+            </div>
+        `;
+        
+        return null;
+    }
+}
+
+// Fonction pour ajouter les régions SEULEMENT
+function addRegionLayer(map, regionData) {
+    if (!map || !regionData || !regionData.features) {
+        console.warn('⚠️ Données régions manquantes');
+        return null;
+    }
+    
+    try {
+        // Supprimer l'ancienne couche si elle existe
+        if (regionLayer && map.hasLayer(regionLayer)) {
+            map.removeLayer(regionLayer);
+        }
+        
+        // Couleurs pour les régions
+        const regionColors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+            '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'
+        ];
+        
+        // Créer la couche des régions
+        regionLayer = L.geoJSON(regionData, {
+            style: function(feature) {
+                const colorIndex = (feature.properties.OBJECTID || 0) % regionColors.length;
+                return {
+                    fillColor: regionColors[colorIndex],
+                    weight: 2.5,
+                    opacity: 1,
+                    color: '#ffffff',
+                    fillOpacity: 0.8
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties && feature.properties.NOMREG) {
+                    const popupContent = `
+                        <div style="min-width: 200px; font-family: system-ui, sans-serif;">
+                            <div style="
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                padding: 10px 15px;
+                                margin: -16px -16px 10px -16px;
+                                border-radius: 4px 4px 0 0;
+                            ">
+                                <strong style="font-size: 14px;">${feature.properties.NOMREG}</strong>
+                            </div>
+                            <div style="padding: 5px 0;">
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span style="color: #666;">ISF:</span>
+                                    <span style="font-weight: 600; color: #2d3748;">${feature.properties.ISF || 'N/A'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span style="color: #666;">Code:</span>
+                                    <span style="font-weight: 600; color: #2d3748;">${feature.properties.rowcacode1 || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    layer.bindPopup(popupContent);
+                }
+            }
+        }).addTo(map);
+        
+        // Ajuster la vue pour n'afficher que les régions
+        const bounds = regionLayer.getBounds();
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, {
+                padding: [40, 40],
+                maxZoom: 8,
+                animate: true
+            });
+            
+            // Empêcher de zoomer en dehors des limites
+            map.setMaxBounds(bounds.pad(0.15));
+        }
+        
+        console.log('✅ Couche régions ajoutée:', regionData.features.length, 'régions');
+        return regionLayer;
+        
+    } catch (error) {
+        console.error('❌ Erreur ajout régions:', error);
+        return null;
+    }
+}
+
+// Fonction pour ajouter les départements SEULEMENT
+function addDepartementLayer(map, departementData) {
+    if (!map || !departementData || !departementData.features) {
+        console.warn('⚠️ Données départements manquantes');
+        return null;
+    }
+    
+    try {
+        // Supprimer l'ancienne couche si elle existe
+        if (departementLayer && map.hasLayer(departementLayer)) {
+            map.removeLayer(departementLayer);
+        }
+        
+        // Nuances de bleu pour les départements
+        const blueShades = [
+            '#3388ff', '#2e7acc', '#296bb3', '#245d99', 
+            '#1f4e80', '#1a4066', '#15324d', '#102433'
+        ];
+        
+        // Créer la couche des départements
+        departementLayer = L.geoJSON(departementData, {
+            style: function(feature) {
+                const colorIndex = (feature.properties.OBJECTID || 0) % blueShades.length;
+                return {
+                    fillColor: blueShades[colorIndex],
+                    weight: 1.2,
+                    opacity: 1,
+                    color: '#ffffff',
+                    fillOpacity: 0.6
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties && feature.properties.NOMDEP) {
+                    const popupContent = `
+                        <div style="min-width: 220px; font-family: system-ui, sans-serif;">
+                            <div style="
+                                background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+                                color: white;
+                                padding: 10px 15px;
+                                margin: -16px -16px 10px -16px;
+                                border-radius: 4px 4px 0 0;
+                            ">
+                                <strong style="font-size: 14px;">${feature.properties.NOMDEP}</strong>
+                            </div>
+                            <div style="padding: 5px 0;">
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span style="color: #666;">Région:</span>
+                                    <span style="font-weight: 600; color: #2d3748;">${feature.properties.adm_01 || 'N/A'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span style="color: #666;">Code:</span>
+                                    <span style="font-weight: 600; color: #2d3748;">${feature.properties.rowcacode2 || 'N/A'}</span>
+                                </div>
+                                ${feature.properties.DepCodDep ? `
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span style="color: #666;">Code Dépt:</span>
+                                    <span style="font-weight: 600; color: #2d3748;">${feature.properties.DepCodDep}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    layer.bindPopup(popupContent);
+                }
+            }
+        }).addTo(map);
+        
+        // Ajuster la vue pour n'afficher que les départements
+        const bounds = departementLayer.getBounds();
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, {
+                padding: [40, 40],
+                maxZoom: 9,
+                animate: true
+            });
+            
+            // Empêcher de zoomer en dehors des limites
+            map.setMaxBounds(bounds.pad(0.15));
+        }
+        
+        console.log('✅ Couche départements ajoutée:', departementData.features.length, 'départements');
+        return departementLayer;
+        
+    } catch (error) {
+        console.error('❌ Erreur ajout départements:', error);
+        return null;
+    }
+}
+
+// Fonction pour charger les données
+async function loadGeoJSONData() {
+    console.log('📡 Chargement des données GeoJSON...');
+    
+    try {
+        const [regionResponse, departementResponse] = await Promise.all([
+            fetch('/api/regions'),
+            fetch('/api/departements')
+        ]);
+        
+        // Vérifier les réponses
+        if (!regionResponse.ok) {
+            throw new Error(`API Régions: ${regionResponse.status} ${regionResponse.statusText}`);
+        }
+        if (!departementResponse.ok) {
+            throw new Error(`API Départements: ${departementResponse.status} ${departementResponse.statusText}`);
+        }
+        
+        currentRegionData = await regionResponse.json();
+        currentDepartementData = await departementResponse.json();
+        
+        // Validation basique des données
+        if (!currentRegionData.features || currentRegionData.features.length === 0) {
+            throw new Error('Données régions vides ou invalides');
+        }
+        if (!currentDepartementData.features || currentDepartementData.features.length === 0) {
+            throw new Error('Données départements vides ou invalides');
+        }
+        
+        console.log('✅ Données chargées:', {
+            régions: currentRegionData.features.length,
+            départements: currentDepartementData.features.length
+        });
+        
+        // Initialiser les cartes
+        initCleanMaps();
+        
+    } catch (error) {
+        console.error('❌ Erreur de chargement:', error);
+        showError(error);
+    }
+}
+
+// Fonction pour initialiser les deux cartes SANS FOND
+function initCleanMaps() {
+    // 1. Carte des Régions (fond gris clair)
+    regionsMap = createCleanMap('map-regions', '#f8fafc', [17.6078, 8.0817], 5);
+    
+    if (regionsMap && currentRegionData) {
+        // Petit délai pour s'assurer que la carte est prête
+        setTimeout(() => {
+            addRegionLayer(regionsMap, currentRegionData);
+        }, 100);
+    } else {
+        console.error('❌ Impossible de créer la carte régions');
+    }
+    
+    // 2. Carte des Départements (fond gris très clair)
+    departementsMap = createCleanMap('map-departements', '#f8fafc', [17.6078, 8.0817], 6);
+    
+    if (departementsMap && currentDepartementData) {
+        // Petit délai pour s'assurer que la carte est prête
+        setTimeout(() => {
+            addDepartementLayer(departementsMap, currentDepartementData);
+        }, 150);
+    } else {
+        console.error('❌ Impossible de créer la carte départements');
+    }
+    
+    console.log('✅ Cartes initialisées');
+}
+
+// Configuration des événements
+function setupEventListeners() {
+    // Boutons pour actualiser/réinitialiser
+    const showRegionsBtn = document.getElementById('showRegions');
+    const showDepartementsBtn = document.getElementById('showDepartements');
+    
+    if (showRegionsBtn) {
+        showRegionsBtn.addEventListener('click', function() {
+            if (regionsMap && currentRegionData) {
+                addRegionLayer(regionsMap, currentRegionData);
+            }
+        });
+    }
+    
+    if (showDepartementsBtn) {
+        showDepartementsBtn.addEventListener('click', function() {
+            if (departementsMap && currentDepartementData) {
+                addDepartementLayer(departementsMap, currentDepartementData);
+            }
+        });
+    }
+    
+    // Si vous avez des boutons hide (optionnels)
+    const hideRegionsBtn = document.getElementById('hideRegions');
+    const hideDepartementsBtn = document.getElementById('hideDepartements');
+    
+    if (hideRegionsBtn) {
+        hideRegionsBtn.addEventListener('click', function() {
+            if (regionsMap && regionLayer && regionsMap.hasLayer(regionLayer)) {
+                regionsMap.removeLayer(regionLayer);
+                console.log('👁️ Couche régions masquée');
+            }
+        });
+    }
+    
+    if (hideDepartementsBtn) {
+        hideDepartementsBtn.addEventListener('click', function() {
+            if (departementsMap && departementLayer && departementsMap.hasLayer(departementLayer)) {
+                departementsMap.removeLayer(departementLayer);
+                console.log('👁️ Couche départements masquée');
+            }
+        });
+    }
+    
+    console.log('🎮 Événements configurés');
+}
+
+// Fonction pour afficher les erreurs
+function showError(error) {
+    const errorHtml = `
+        <div style="
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px;
+            color: #856404;
+            font-family: system-ui, sans-serif;
+        ">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 20px;">⚠️</span>
+                <div>
+                    <h5 style="margin: 0 0 5px 0; font-size: 14px;">Données temporairement indisponibles</h5>
+                    <p style="margin: 0; font-size: 13px;">
+                        ${error.message || 'Les données cartographiques ne sont pas disponibles pour le moment.'}
+                    </p>
+                    <button onclick="window.location.reload()" style="
+                        margin-top: 10px;
+                        padding: 5px 12px;
+                        background: #856404;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        cursor: pointer;
+                    ">
+                        Réessayer
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Afficher dans les deux conteneurs de carte
+    ['map-regions', 'map-departements'].forEach(id => {
+        const container = document.getElementById(id);
+        if (container) {
+            container.innerHTML = errorHtml;
+        }
+    });
+}
+
+// Vérifier si Leaflet est chargé
+function checkLeafletLoaded() {
+    if (typeof L === 'undefined') {
+        console.error('❌ Leaflet non chargé');
+        return false;
+    }
+    if (typeof L.map === 'undefined') {
+        console.error('❌ Leaflet.map non disponible');
+        return false;
+    }
+    return true;
+}
+
+// Initialisation principale
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🏗️ Initialisation des cartes sans fond...');
+    
+    // Vérifier que Leaflet est chargé
+    if (!checkLeafletLoaded()) {
+        console.error('❌ Leaflet.js doit être chargé avant ce script');
+        showError(new Error('Bibliothèque cartographique non chargée'));
+        return;
+    }
+    
+    // Configurer les événements
+    setupEventListeners();
+    
+    // Charger les données
+    loadGeoJSONData();
+});
+
+// Redimensionnement automatique
+window.addEventListener('resize', function() {
+    // Petit délai pour éviter les recalculs trop fréquents
+    clearTimeout(window.resizeTimer);
+    window.resizeTimer = setTimeout(function() {
+        if (regionsMap) {
+            regionsMap.invalidateSize();
+        }
+        if (departementsMap) {
+            departementsMap.invalidateSize();
+        }
+        console.log('🔄 Cartes redimensionnées');
+    }, 250);
+});
+
+// Exposer des fonctions globales si besoin
+window.reloadMaps = function() {
+    console.log('🔄 Rechargement des cartes...');
+    if (regionsMap && currentRegionData) {
+        addRegionLayer(regionsMap, currentRegionData);
+    }
+    if (departementsMap && currentDepartementData) {
+        addDepartementLayer(departementsMap, currentDepartementData);
+    }
+};
+
+window.resetMaps = function() {
+    console.log('🔄 Réinitialisation des vues...');
+    if (regionsMap) {
+        regionsMap.setView([17.6078, 8.0817], 5);
+    }
+    if (departementsMap) {
+        departementsMap.setView([17.6078, 8.0817], 6);
+    }
+};
+
+// Vérification automatique des erreurs
+setTimeout(() => {
+    if (!regionsMap && !departementsMap) {
+        console.warn('⚠️ Les cartes ne semblent pas être initialisées');
+    }
+}, 2000);
+</script>
+
+<!-- Style CSS ESSENTIEL pour que les cartes s'affichent -->
+<style>
+    /* STYLES OBLIGATOIRES pour que Leaflet fonctionne */
+    #map-regions, #map-departements {
+        height: 400px !important;
+        width: 100% !important;
+        min-height: 300px;
+    }
+    
+    /* Override des styles Leaflet pour cacher le fond */
+    .leaflet-container {
+        background: transparent !important;
+    }
+    
+    .leaflet-tile-pane {
+        display: none !important;
+    }
+    
+    .leaflet-control-container {
+        z-index: 1000;
+    }
+    
+    /* Cacher les attributions */
+    .leaflet-control-attribution {
+        display: none !important;
+    }
+    
+    /* Styles pour vos boutons */
+    .map-controls {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .map-controls .btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    /* Animation pour les polygones */
+    .leaflet-interactive {
+        transition: fill-opacity 0.3s ease, stroke-width 0.3s ease;
+    }
+    
+    .leaflet-interactive:hover {
+        fill-opacity: 0.9 !important;
+        stroke-width: 3px !important;
+        cursor: pointer;
+    }
+    
+    /* Style des popups */
+    .leaflet-popup-content-wrapper {
+        border-radius: 6px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+        border: none !important;
+    }
+</style>

@@ -1,4 +1,4 @@
-const sequelize = require('../config/database');
+const sequelize = require('../config/menageDB');
 const User = require('./User');
 const Region = require('./Region');
 const Departement = require('./Departement');

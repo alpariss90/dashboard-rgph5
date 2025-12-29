@@ -18,6 +18,7 @@ const locationRouter = require('./routes/lieuRoutes');
 const checkFirstConnect = require('./middleware/checkFirstConnect');
 const lieuRouter = require('./routes/lieuRoutes');
 const { performanceMonitor, performanceMetrics } = require('./middleware/performanceMonitor');
+const apiRoutes = require('./routes/api');
 
 var expressLayouts = require('express-ejs-layouts');
 
@@ -63,6 +64,8 @@ const apiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use('/stats/', apiLimiter);
+
+app.use('/api', apiRoutes); 
 
 // 4. Static files avec cache optimisé
 app.use(express.static(path.join(__dirname, 'public'), {

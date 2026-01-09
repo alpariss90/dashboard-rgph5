@@ -29,15 +29,17 @@ module.exports = router; */
 const express = require('express');
 const router = express.Router();
 const requireAuth = require('../middleware/authMiddleware');
+const mapAuthorization = require('../middleware/mapAuthorization');
 
 const dashboardController = require('../controllers/dashboardController');
 const locationController = require('../controllers/locationController');
 
-// Dashboard
-router.get('/', requireAuth, dashboardController.showDashboard);
+
+
+router.get('/', requireAuth,mapAuthorization, dashboardController.showDashboard);
 
 // Nouvelle page pour les graphiques
-router.get('/charts', requireAuth, dashboardController.showCharts);
+router.get('/charts', requireAuth,dashboardController.showCharts);
 
 // AJAX selects - CORRECTION DES CHEMINS
 router.get('/api/location/regions', requireAuth, locationController.getRegions);

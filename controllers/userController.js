@@ -136,6 +136,30 @@ exports.desactivateUser = async (req, res) => {
     res.redirect('/users');
   }
 };
+// Réactiver un utilisateur
+exports.activateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Mise à jour du statut à 1 (actif)
+    const [updated] = await User.update(
+      { statut: '1' },
+      { where: { id } }
+    );
+
+    if (updated === 0) {
+      req.session.error = "Utilisateur introuvable ou déjà activé.";
+      return res.redirect('/users');
+    }
+
+    req.session.success = "Utilisateur réactivé avec succès !";
+    res.redirect('/users');
+  } catch (error) {
+    console.error("Erreur lors de l'activation' :", error);
+    req.session.error = "Erreur lors de la réactivation : " + error.message;
+    res.redirect('/users');
+  }
+};
 
 // Traiter l'inscription (ancienne méthode - gardez pour compatibilité)
 exports.register = async (req, res) => {
@@ -216,7 +240,9 @@ exports.resetPassword = async (req, res) => {
 
     // Mise à jour du mot de passe
     const [updated] = await User.update(
-      { password: hashedPassword },
+      { password: hashedPassword,
+        firstConnect : '1'
+       },
       { where: { id } }
     );
 

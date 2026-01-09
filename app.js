@@ -19,6 +19,7 @@ const checkFirstConnect = require('./middleware/checkFirstConnect');
 const lieuRouter = require('./routes/lieuRoutes');
 const { performanceMonitor, performanceMetrics } = require('./middleware/performanceMonitor');
 const apiRoutes = require('./routes/api');
+const mapAuthorization = require('./middleware/mapAuthorization');
 
 var expressLayouts = require('express-ejs-layouts');
 
@@ -113,6 +114,8 @@ app.use(performanceMonitor);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use(mapAuthorization); 
 
 // Routes principales
 app.use('/', dashboardRoutes);

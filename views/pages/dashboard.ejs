@@ -497,25 +497,25 @@
   
 </div>
 <div class="row mt-4">
+    <% if (mapAccess.showRegionMap) { %>
     <div class="col-xl-6">
-        <div class="card">
-            <div class="card-body">
-                <!-- La carte sera insérée ici -->
+        <div class="card map-card"> <div class="card-body">
                 <div id="map-regions"></div>
             </div>
         </div>
     </div>
+    <% } %>
 
+    <% if (mapAccess.showDeptMap) { %>
     <div class="col-xl-6">
-        <div class="card">
+        <div class="card map-card">
             <div class="card-body">
-                <!-- La carte sera insérée ici -->
                 <div id="map-departements"></div>
             </div>
         </div>
     </div>
+    <% } %>
 </div>
-
 <style>
     .map-container {
         height: 400px;
@@ -1153,11 +1153,171 @@ let regionLayer = null;
 let departementLayer = null;
 let regionStats = null;
 let departementStats = null;
+let filteredRegionData = null;
+let filteredDepartementData = null;
+
 
 // Couleurs pour les gradients
 const COLOR_SCALES = {
     green: ['#CAEAA9E0', '#6DC645FF', '#54BD41FF', '#36B23DFF', '#12A537FF']
 };
+
+// Fonction pour filtrer les données en fonction du rôle
+function filterDataByRole(geoData, statsData, userRole, userCode) {
+    if (userRole === 'ROLE_GLOBAL') {
+        // ROLE_GLOBAL: toutes les données
+        return { geoData, statsData };
+    }
+    
+    if (!userCode) {
+        console.warn('⚠️ Code utilisateur non défini pour le filtrage');
+        return { geoData: { features: [] }, statsData: [] };
+    }
+    
+    if (userRole === 'ROLE_REGIONAL') {
+        // ROLE_REGIONAL: seulement la région de l'utilisateur
+        const filteredGeo = {
+            ...geoData,
+            features: geoData.features.filter(feature => 
+                feature.properties.code_region === userCode || 
+                feature.properties.NOMREG === userCode
+            )
+        };
+        
+        const filteredStats = statsData.filter(stat => 
+            stat.code === userCode || stat.nom === userCode
+        );
+        
+        return { geoData: filteredGeo, statsData: filteredStats };
+    }
+    
+    if (userRole === 'ROLE_DEPARTEMENTAL') {
+        // ROLE_DEPARTEMENTAL: seulement le département de l'utilisateur
+        const filteredGeo = {
+            ...geoData,
+            features: geoData.features.filter(feature => 
+                feature.properties.code_departement === userCode || 
+                feature.properties.NOMDEP === userCode
+            )
+        };
+        
+        const filteredStats = statsData.filter(stat => 
+            stat.code === userCode || stat.nom === userCode
+        );
+        
+        return { geoData: filteredGeo, statsData: filteredStats };
+    }
+    
+    // Pour ROLE_COMMUNAL ou autres rôles sans cartes
+    return { geoData: { features: [] }, statsData: [] };
+}
+
+// Modifier la fonction createBothMaps pour utiliser les versions filtrées
+// Fonction principale optimisée pour les rôles
+async function createBothMaps() {
+    console.log('🗺️ Initialisation des cartes selon les droits...');
+
+    // 1. Vérification de la présence des conteneurs dans le DOM
+    const regionContainer = document.getElementById('map-regions');
+    const deptContainer = document.getElementById('map-departements');
+
+    const promises = [];
+    const mapTypes = [];
+
+    // 2. On prépare uniquement les requêtes nécessaires
+    if (regionContainer) {
+        console.log('🔹 Chargement carte Régions...');
+        promises.push(Promise.all([fetch('/api/regions'), loadRegionStats()]));
+        mapTypes.push('region');
+    }
+
+    if (deptContainer) {
+        console.log('🔹 Chargement carte Départements...');
+        promises.push(Promise.all([fetch('/api/departements'), loadDepartementStats()]));
+        mapTypes.push('departement');
+    }
+
+    if (promises.length === 0) {
+        console.log('ℹ️ Aucune carte à afficher pour ce rôle.');
+        return;
+    }
+
+    try {
+        // 3. Exécution parallèle des requêtes requises uniquement
+        const results = await Promise.all(promises);
+
+        // 4. Construction des cartes
+        for (let i = 0; i < results.length; i++) {
+            const [geoResponse, statsData] = results[i];
+            const type = mapTypes[i];
+
+            if (!geoResponse.ok) throw new Error(`Erreur chargement données ${type}`);
+            const geoData = await geoResponse.json();
+
+            if (type === 'region') {
+                createRegionMap(geoData, statsData); // Votre fonction existante
+            } else if (type === 'departement') {
+                createDepartementMap(geoData, statsData); // Votre fonction existante
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur création cartes:', error);
+        // Affiche l'erreur uniquement dans les conteneurs qui existent
+        if (regionContainer) showErrorInContainer('map-regions', error);
+        if (deptContainer) showErrorInContainer('map-departements', error);
+    }
+}
+
+// Petite fonction utilitaire pour l'erreur ciblée (remplace votre showError global)
+function showErrorInContainer(id, error) {
+    const container = document.getElementById(id);
+    if (container) {
+        container.innerHTML = `<div class="alert alert-danger">Erreur: ${error.message}</div>`;
+    }
+}
+// Fonction pour afficher un message d'accès refusé
+function showNoAccessMessage() {
+    const message = `
+        <div class="alert alert-info" role="alert">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="ri-information-line fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="alert-heading">Accès restreint</h5>
+                    <p class="mb-0">
+                        L'accès aux cartes géographiques est limité selon votre profil.
+                        <% if (mapAccess.isCommunal){ %>
+                        En tant qu'agent communal, vous avez accès aux données détaillées de votre commune
+                        via les indicateurs statistiques ci-dessus.
+                        <% } else { %>
+                        Contactez l'administrateur si vous pensez avoir besoin d'accéder à ces fonctionnalités.
+                        <% } %>
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Injecter le message
+    const mapsSection = document.querySelector('.row.mt-4');
+    if (mapsSection) {
+        mapsSection.innerHTML = message;
+    }
+}
+
+// Fonction pour adapter le zoom en fonction du nombre d'éléments
+function adjustMapZoom(map, featuresCount) {
+    if (featuresCount === 1) {
+        // Si un seul élément, zoomer dessus
+        map.setZoom(9, { animate: true });
+    } else if (featuresCount <= 3) {
+        // Si peu d'éléments, zoom moyen
+        map.setZoom(8, { animate: true });
+    }
+    // Sinon, garder le zoom par défaut
+}
 
 // Fonction pour créer une carte avec fond uni
 function createCleanMap(containerId, title, colorScale = 'green', center = [17.6078, 8.0817], zoom = 5.5) {
@@ -1433,7 +1593,7 @@ function createRegionMap(regionData, stats) {
                     </div>
                     <div style="padding: 10px 0;">
                         <div style="text-align: center; margin-bottom: 15px;">
-                            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Taux de progression</div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 5px;justify-content: center;">Taux de progression</div>
                             <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                                 <div style="
                                     width: 80px;
@@ -1503,26 +1663,16 @@ function createRegionMap(regionData, stats) {
 
 const bounds = regionLayer.getBounds();
 if (bounds.isValid()) {
-    // 1. fitBounds initial avec padding minimal
     regionMap.fitBounds(bounds, {
         padding: [15, 15],
         maxZoom: 7.5,
         animate: true
     });
     
-    // 2. Zoom progressif très doux
+    // Ajuster le zoom selon le nombre de régions
     setTimeout(() => {
-        const currentZoom = regionMap.getZoom();
-        // Essayer différentes valeurs pour trouver le bon réglage
-        const zoomIncrement = 0.3; // ← TRÈS DOUX (essayez 0.2, 0.3, 0.4)
-        
-        if (currentZoom < 7) {
-            regionMap.setZoom(currentZoom + zoomIncrement, {
-                animate: true,
-                duration: 0.5
-            });
-        }
-    }, 400);
+        adjustMapZoom(regionMap, regionDataWithStats.length);
+    }, 500);
 }
     console.log('✅ Carte régions créée avec', regionDataWithStats.length, 'régions');
 }
@@ -1639,13 +1789,18 @@ function createDepartementMap(departementData, stats) {
     
     // Ajuster la vue
     const bounds = departementLayer.getBounds();
-    if (bounds.isValid()) {
-        departementMap.fitBounds(bounds, {
-            padding: [30, 30],
-            maxZoom: 8,
-            animate: true
-        });
-    }
+if (bounds.isValid()) {
+    departementMap.fitBounds(bounds, {
+        padding: [30, 30],
+        maxZoom: 8,
+        animate: true
+    });
+    
+    // Ajuster le zoom selon le nombre de départements
+    setTimeout(() => {
+        adjustMapZoom(departementMap, departementDataWithStats.length);
+    }, 500);
+}
     
     console.log('✅ Carte départements créée avec', departementDataWithStats.length, 'départements');
 }

@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/menageDB');
 const Region = require('./Region');
 
 const Departement = sequelize.define('Departement', {

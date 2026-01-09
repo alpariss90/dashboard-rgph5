@@ -143,6 +143,15 @@ router.post('/login', async (req, res) => {
                 layout: false
             });
         }
+        
+        // ===== VÉRIFICATION DU STATUT =====
+        if (user.statut !== '1' && user.statut !== 1) {
+            return res.render('pages/login', {
+                title: 'Connexion',
+                error: 'Votre compte est désactivé. Contactez l\'administrateur.',
+                layout: false
+            });
+        }
 
         console.log('=== DEBUG COMPLET ===');
         console.log('1. Password input:', `"${password}"`);

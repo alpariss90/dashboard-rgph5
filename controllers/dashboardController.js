@@ -1,7 +1,8 @@
 // controllers/dashboardController.js
 // Utiliser le service optimisé avec Redis cache
 const menageService = require('../services/menageServiceUltraFast');
-
+const fs = require('fs');
+const path = require('path');
 
 function normalizeFilterValue(value) {
     if (value === null || value === undefined) {
@@ -334,6 +335,22 @@ exports.showCharts = async (req, res) => {
   }
 };
 
+exports.dashboard = (req, res, next) => {
+  try {
+    const regionsPath = path.join(__dirname, '../geoJSON/RegionNiger.geojson');
+    const departementsPath = path.join(__dirname, '../geoJSON/DepartementNiger.geojson');
+
+    const regionsGeoJSON = JSON.parse(fs.readFileSync(regionsPath, 'utf8'));
+    const departementsGeoJSON = JSON.parse(fs.readFileSync(departementsPath, 'utf8'));
+
+    res.render('pages/', {
+      regions: regionsGeoJSON,
+      departements: departementsGeoJSON
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // ===== FONCTIONS HELPER =====
 

@@ -9,7 +9,10 @@ router.post('/register',requireAuth, userController.register);
 router.get('/',requireAuth, userController.listUsers);
 
 router.post('/edit/:id',requireAuth, userController.updateUser);
+router.post('/reset-password/:id',requireAuth, userController.resetPassword);
 router.get('/desactivate/:id',requireAuth, userController.desactivateUser);
+router.get('/activate/:id',requireAuth, userController.activateUser);
+
 
 // Route pour la recherche
 router.get('/search',requireAuth, userController.searchUsers);

@@ -66,15 +66,6 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 app.use('/stats/', apiLimiter);
 
-app.use('/api', apiRoutes); 
-
-// 4. Static files avec cache optimisé
-app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: '1d', // Cache des fichiers statiques pendant 1 jour
-  etag: true,
-  lastModified: true,
-}));
-
 // Configuration des sessions
 app.use(session({
   secret: 'votre_secret',
@@ -86,6 +77,17 @@ app.use(session({
     httpOnly: true   // protection contre les attaques XSS
   } // Mettre à true si HTTPS
 }));
+
+
+app.use('/api', apiRoutes); 
+
+// 4. Static files avec cache optimisé
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d', // Cache des fichiers statiques pendant 1 jour
+  etag: true,
+  lastModified: true,
+}));
+
 
 // Middleware pour passer les messages aux vues
 app.use((req, res, next) => {

@@ -2,7 +2,7 @@
 
 CREATE OR REPLACE
 ALGORITHM = UNDEFINED
-VIEW `menage`.`level1` AS
+VIEW `level1` AS
 SELECT
     `l`.`level-1-id` AS `level-1-id`,
     SUBSTR(`l`.`mo_zd`, 1, 1) AS `code_region`,
@@ -16,16 +16,16 @@ SELECT
     `l`.`mo_id` AS `mo_id`
 FROM (
         (
-            `menage`.`level-1` `l`
-            JOIN `menage`.`region` `r`
+            `level-1` `l`
+            JOIN `region` `r`
               ON CONVERT(`r`.`code` USING utf8mb4) COLLATE utf8mb4_unicode_ci
                = CONVERT(SUBSTR(`l`.`mo_zd`, 1, 1) USING utf8mb4) COLLATE utf8mb4_unicode_ci
         )
-        JOIN `menage`.`departement` `d`
+        JOIN `departement` `d`
           ON CONVERT(`d`.`code` USING utf8mb4) COLLATE utf8mb4_unicode_ci
            = CONVERT(SUBSTR(`l`.`mo_zd`, 1, 3) USING utf8mb4) COLLATE utf8mb4_unicode_ci
     )
-    JOIN `menage`.`commune` `c`
+    JOIN `commune` `c`
       ON CONVERT(`c`.`code` USING utf8mb4) COLLATE utf8mb4_unicode_ci
        = CONVERT(SUBSTR(`l`.`mo_zd`, 1, 5) USING utf8mb4) COLLATE utf8mb4_unicode_ci;
 
@@ -49,11 +49,11 @@ CREATE TABLE `tlevel1` (
 
 
 INSERT INTO `tlevel1`
-SELECT * FROM `menage`.`level1`;
+SELECT * FROM `level1`;
 -- menage.vagriculture source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`vagriculture` AS
+ALGORITHM = UNDEFINED VIEW `vagriculture` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -76,8 +76,8 @@ select
     `a`.`ag02e1` AS `ag02e1`,
     `a`.`ag02e2` AS `ag02e2`
 from
-    (`menage`.`tlevel1` `l`
-join `menage`.`agriculture` `a`)
+    (`tlevel1` `l`
+join `agriculture` `a`)
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
 
@@ -85,7 +85,7 @@ where
 -- menage.vcaracteristique source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`vcaracteristique` AS
+ALGORITHM = UNDEFINED VIEW `vcaracteristique` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -195,9 +195,9 @@ select
         else 0
     end) AS `age_19_45`
 from
-    ((`menage`.`tlevel1` `l`
-join `menage`.`caracteristique` `a`)
-left join `menage`.`tranche_age` `t` on
+    ((`tlevel1` `l`
+join `caracteristique` `a`)
+left join `tranche_age` `t` on
     ((`a`.`c06` between `t`.`min_value` and `t`.`max_value`)))
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
@@ -205,7 +205,7 @@ where
 -- menage.vdeces source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`vdeces` AS
+ALGORITHM = UNDEFINED VIEW `vdeces` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -224,15 +224,15 @@ select
     `a`.`d04` AS `d04`,
     `a`.`d05` AS `d05`
 from
-    (`menage`.`tlevel1` `l`
-join `menage`.`deces` `a`)
+    (`tlevel1` `l`
+join `deces` `a`)
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
 
 -- menage.velevage source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`velevage` AS
+ALGORITHM = UNDEFINED VIEW `velevage` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -252,8 +252,8 @@ select
     `a`.`e004` AS `e004`,
     `a`.`e005` AS `e005`
 from
-    (`menage`.`tlevel1` `l`
-join `menage`.`elevage` `a`)
+    (`tlevel1` `l`
+join `elevage` `a`)
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
 
@@ -261,7 +261,7 @@ where
 -- menage.vemigration source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`vemigration` AS
+ALGORITHM = UNDEFINED VIEW `vemigration` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -291,8 +291,8 @@ select
     `a`.`em12` AS `em12`,
     `a`.`em12a` AS `em12a`
 from
-    (`menage`.`tlevel1` `l`
-join `menage`.`emigration` `a`)
+    (`tlevel1` `l`
+join `emigration` `a`)
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
 
@@ -301,7 +301,7 @@ where
 -- menage.vhabitat source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`vhabitat` AS
+ALGORITHM = UNDEFINED VIEW `vhabitat` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -378,8 +378,8 @@ select
     `a`.`h1425` AS `h1425`,
     `a`.`h1426` AS `h1426`
 from
-    (`menage`.`tlevel1` `l`
-join `menage`.`habitat` `a`)
+    (`tlevel1` `l`
+join `habitat` `a`)
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
 
@@ -387,7 +387,7 @@ where
 -- menage.vmenage source
 
 CREATE OR REPLACE
-ALGORITHM = UNDEFINED VIEW `menage`.`vmenage` AS
+ALGORITHM = UNDEFINED VIEW `vmenage` AS
 select
     `l`.`code_region` AS `code_region`,
     `l`.`region` AS `region`,
@@ -459,8 +459,8 @@ select
     `a`.`nb_resident_presents` AS `nb_resident_presents`,
     `a`.`nb_rp_h` AS `nb_rp_h`
 from
-    (`menage`.`tlevel1` `l`
-join `menage`.`menage` `a`)
+    (`tlevel1` `l`
+join `menage` `a`)
 where
     (`l`.`level-1-id` = `a`.`level-1-id`);
 

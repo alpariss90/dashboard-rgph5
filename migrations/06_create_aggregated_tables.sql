@@ -3,7 +3,7 @@
 -- Ces tables stockent des statistiques calculées à l'avance
 -- =====================================================
 
-USE menageDBTEST;
+USE menage;
 
 -- =====================================================
 -- 1. TABLE STATS PAR RÉGION

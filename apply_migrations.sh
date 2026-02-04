@@ -32,7 +32,7 @@ fi
 # Variables de connexion avec valeurs par défaut
 DB_HOST="${MENAGE_DB_HOST:-localhost}"
 DB_PORT="${MENAGE_DB_PORT:-3306}"
-DB_NAME="${MENAGE_DB_NAME:-menageDBTEST}"
+DB_NAME="${MENAGE_DB_NAME:-menage}"
 DB_USER="${MENAGE_DB_USER:-root}"
 DB_PASSWORD="${MENAGE_DB_PASSWORD}"
 

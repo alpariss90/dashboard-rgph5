@@ -1,5 +1,5 @@
 -- File: create_indexes_optimized.sql
-USE menageDBTEST;
+USE menage;
 
 SET SESSION sql_log_bin = 0;  -- Désactive le binlog temporairement
 SET SESSION sort_buffer_size = 64*1024*1024;  -- 64M

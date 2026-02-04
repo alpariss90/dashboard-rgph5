@@ -3,7 +3,7 @@
 -- Exécution: peut prendre plusieurs minutes sur de grosses bases
 -- =====================================================
 
-USE menage;
+USE menageDBTEST;
 
 SET SESSION sql_mode = 'TRADITIONAL';
 

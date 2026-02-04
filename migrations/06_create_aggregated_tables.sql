@@ -3,7 +3,7 @@
 -- Ces tables stockent des statistiques calculées à l'avance
 -- =====================================================
 
-USE menage;
+USE menageDBTEST;
 
 -- =====================================================
 -- 1. TABLE STATS PAR RÉGION
@@ -317,4 +317,4 @@ CREATE TABLE pyramide_ages_nationale (
 -- =====================================================
 
 SELECT '✅ Tables pré-agrégées créées avec succès!' AS status;
-SELECT 'ℹ️  Utilisez le script 03_populate_aggregated_tables.sql pour peupler ces tables' AS info;
+SELECT 'ℹ️  Utilisez le script 07_populate_aggregated_tables.sql pour peupler ces tables' AS info;

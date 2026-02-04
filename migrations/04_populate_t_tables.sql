@@ -1,25 +1,25 @@
 INSERT INTO `tagriculture`
-SELECT * FROM `menage`.`vagriculture`;
+SELECT * FROM `vagriculture`;
 
 
 INSERT INTO `tcaracteristique`
-SELECT * FROM `menage`.`vcaracteristique`;
+SELECT * FROM `vcaracteristique`;
 
 
 INSERT INTO `tdeces`
-SELECT * FROM `menage`.`vdeces`;
+SELECT * FROM `vdeces`;
 
 
 INSERT INTO `televage`
-SELECT * FROM `menage`.`velevage`;
+SELECT * FROM `velevage`;
 
 INSERT INTO `temigration`
-SELECT * FROM `menage`.`vemigration`;
+SELECT * FROM `vemigration`;
 
 
 INSERT INTO `thabitat`
-SELECT * FROM `menage`.`vhabitat`;
+SELECT * FROM `vhabitat`;
 
 
 INSERT INTO `tmenage`
-SELECT * FROM `menage`.`vmenage`;
+SELECT * FROM `vmenage`;

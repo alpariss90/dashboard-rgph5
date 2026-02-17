@@ -16,14 +16,15 @@ SELECT '📊 Calcul des statistiques nationales...' AS status;
 UPDATE stats_nationales SET
     -- Stats ménages
     total_menages = (SELECT COUNT(*) FROM tmenage),
-    total_population = (SELECT COALESCE(SUM(nb_residents), 0) FROM tmenage),
+    total_population = (SELECT COALESCE(SUM(nb_rv), 0) FROM tstats),
     nb_menages_plus_10 = (SELECT COUNT(*) FROM tmenage WHERE xm40 > 10),
     nb_menages_solo = (SELECT COUNT(*) FROM tmenage WHERE xm40 = 1),
-    population_rurale = (SELECT COUNT(*) FROM tmenage WHERE xm01 = 2),
+    population_rurale = (SELECT SUM(XM40) FROM tmenage WHERE xm01 = 2),
     menages_enumeres = (SELECT COUNT(*) FROM tmenage WHERE xm30 > 0),
-    menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm13 = 1),
+    menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 1),
     population_carto = (SELECT COALESCE(SUM(xm20), 0) FROM tmenage),
     population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
+    
     -- Requete nouvelle ajouté
     average_deces = (SELECT COALESCE(SUM(d01), 0) FROM tmenage),
     
@@ -31,15 +32,15 @@ UPDATE stats_nationales SET
     hommes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 1),
     femmes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2),
     nb_enfants_moins_5 = (SELECT COUNT(*) FROM tcaracteristique WHERE c06 < 5),
-    nb_residents_absents = (SELECT COUNT(*) FROM tcaracteristique WHERE c04 = 2),
-    nb_visiteurs = (SELECT COUNT(*) FROM tcaracteristique WHERE c04 = 3),
-    nb_naissances_vivantes = (SELECT COALESCE(SUM(c24_t), 0) FROM tcaracteristique WHERE c24_t > 0),
+    nb_residents_absents = (SELECT sum(nb_ra) FROM tstats),
+    nb_visiteurs = (SELECT sum(nb_v) FROM tstats),
+    nb_naissances_vivantes = (SELECT COALESCE(SUM(c30t), 0) FROM tcaracteristique WHERE c30t > 0),
     nb_femmes_15_49 = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2 AND c06 BETWEEN 15 AND 49),
     
     -- Stats agricoles et émigration
     menages_agricoles = (SELECT COUNT(DISTINCT `level-1-id`) FROM tagriculture),
-    total_emigres = (SELECT COALESCE(SUM(em02), 0) FROM temigration),
-    menages_avec_emigres = (SELECT COUNT(DISTINCT `level-1-id`) FROM temigration WHERE em02 > 0),
+    total_emigres = (SELECT COALESCE(count(em02), 0) FROM temigration),
+    menages_avec_emigres = (SELECT COUNT(DISTINCT `level-1-id`) FROM temigration),
     
     date_maj = NOW()
 WHERE id = 1;

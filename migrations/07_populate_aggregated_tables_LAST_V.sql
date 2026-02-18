@@ -3,7 +3,6 @@
 -- Exécution: peut prendre plusieurs minutes sur de grosses bases
 -- =====================================================
 
-USE menage;
 
 SET SESSION sql_mode = 'TRADITIONAL';
 
@@ -283,7 +282,7 @@ FROM
     LEFT JOIN (
         SELECT m.code_commune, 
                COALESCE(SUM(e.em02), 0) as total_emigres,
-               --COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_commune
@@ -364,7 +363,7 @@ FROM
     LEFT JOIN (
         SELECT m.mo_zd, 
                COALESCE(SUM(e.em02), 0) as total_emigres,
-               --COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.mo_zd

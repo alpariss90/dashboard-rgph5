@@ -94,16 +94,16 @@ SELECT
     COALESCE(E.menages_avec_emigres, 0)
 
 FROM 
-    -- 1. Agrégation Ménages (Source fiable)
+    -- 1. Agrégation Ménages (Source fiable) okk
     (SELECT 
         code_region, region,
         COUNT(*) as total_menages,
-        COALESCE(SUM(nb_residents), 0) as total_population,
+        COALESCE(SUM(xm40), 0) as total_population,
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
-        SUM(CASE WHEN xm13 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces -- SOMME DES DÉCÈS
@@ -120,7 +120,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c24_t > 0 THEN c.c24_t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c
         INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
@@ -138,8 +138,9 @@ FROM
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.code_region, 
-               COALESCE(SUM(e.em02), 0) as total_emigres,
-               COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               COALESCE(count(*), 0) as total_emigres,
+               -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e
         INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_region
@@ -175,12 +176,12 @@ SELECT
 FROM 
     (SELECT 
         code_region, code_departement, departement,
-        COUNT(*) as total_menages, COALESCE(SUM(nb_residents), 0) as total_population,
+        COUNT(*) as total_menages, COALESCE(SUM(xm40), 0) as total_population,
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
-        SUM(CASE WHEN xm13 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         COALESCE(SUM(xm20), 0) as population_carto, COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
@@ -191,19 +192,20 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c24_t > 0 THEN c.c24_t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.code_departement
     ) P ON H.code_departement = P.code_departement
     LEFT JOIN (
-        SELECT m.code_departement, COUNT(DISTINCT a.`level-1-id`) as menages_agricoles
+        SELECT m.code_departement, COUNT(DISTINCT m.`level-1-id`) as menages_agricoles
         FROM tagriculture a JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
         GROUP BY m.code_departement
     ) A ON H.code_departement = A.code_departement
     LEFT JOIN (
         SELECT m.code_departement, COALESCE(SUM(e.em02), 0) as total_emigres,
-               COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_departement
     ) E ON H.code_departement = E.code_departement;
@@ -244,12 +246,12 @@ FROM
     -- 1. Agrégation Ménages
     (SELECT 
         code_region, code_departement, code_commune, commune,
-        COUNT(*) as total_menages, COALESCE(SUM(nb_residents), 0) as total_population,
+        COUNT(*) as total_menages, COALESCE(SUM(xm40), 0) as total_population,
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
-        SUM(CASE WHEN xm13 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         COALESCE(SUM(xm20), 0) as population_carto, COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
      FROM tmenage 
@@ -264,7 +266,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c24_t > 0 THEN c.c24_t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.code_commune
@@ -272,7 +274,7 @@ FROM
 
     -- 3. Jointure Agriculture
     LEFT JOIN (
-        SELECT m.code_commune, COUNT(DISTINCT a.`level-1-id`) as menages_agricoles
+        SELECT m.code_commune, COUNT(DISTINCT m.`level-1-id`) as menages_agricoles
         FROM tagriculture a JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
         GROUP BY m.code_commune
     ) A ON H.code_commune = A.code_commune
@@ -281,7 +283,8 @@ FROM
     LEFT JOIN (
         SELECT m.code_commune, 
                COALESCE(SUM(e.em02), 0) as total_emigres,
-               COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               --COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_commune
     ) E ON H.code_commune = E.code_commune;
@@ -324,12 +327,12 @@ FROM
     -- 1. Agrégation Ménages
     (SELECT 
         code_region, code_departement, code_commune, mo_zd,
-        COUNT(*) as total_menages, COALESCE(SUM(nb_residents), 0) as total_population,
+        COUNT(*) as total_menages, COALESCE(SUM(xm40), 0) as total_population,
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
-        SUM(CASE WHEN xm13 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         COALESCE(SUM(xm20), 0) as population_carto, COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
      FROM tmenage 
@@ -344,7 +347,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c24_t > 0 THEN c.c24_t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c30t > 0 THEN c.30t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.mo_zd
@@ -352,7 +355,7 @@ FROM
 
     -- 3. Jointure Agriculture
     LEFT JOIN (
-        SELECT m.mo_zd, COUNT(DISTINCT a.`level-1-id`) as menages_agricoles
+        SELECT m.mo_zd, COUNT(DISTINCT m.`level-1-id`) as menages_agricoles
         FROM tagriculture a JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
         GROUP BY m.mo_zd
     ) A ON H.mo_zd = A.mo_zd
@@ -361,7 +364,8 @@ FROM
     LEFT JOIN (
         SELECT m.mo_zd, 
                COALESCE(SUM(e.em02), 0) as total_emigres,
-               COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               --COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
+               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.mo_zd
     ) E ON H.mo_zd = E.mo_zd;

@@ -12,7 +12,7 @@ CREATE TABLE if not exists `tagriculture` (
   `agriculture-id` int NOT NULL ,
   `level-1-id` int unsigned NOT NULL,
   `occ` int unsigned NOT NULL DEFAULT '1',
-  `ag00` longtext COLLATE utf8mb3_unicode_ci,
+  `ag00` longtext COLLATE utf8mb3_unicode_ci,  
   `ag0l` longtext COLLATE utf8mb3_unicode_ci,
   `ag02a` longtext COLLATE utf8mb3_unicode_ci,
   `ag02b` longtext COLLATE utf8mb3_unicode_ci,
@@ -23,9 +23,13 @@ CREATE TABLE if not exists `tagriculture` (
   `ag02f` longtext COLLATE utf8mb3_unicode_ci,
   `ag02ga` longtext COLLATE utf8mb3_unicode_ci,
   `ag02gb` longtext COLLATE utf8mb3_unicode_ci,
-  `ag02h` longtext COLLATE utf8mb3_unicode_ci,
+    `ag02i` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02j` longtext COLLATE utf8mb3_unicode_ci,
   KEY `idx_agriculture_level1id` (`level-1-id`)
-) ENGINE=InnoDB AUTO_INCREMENT=308 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+
+
+
 
 
 
@@ -39,7 +43,7 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `caracteristique-id` int NOT NULL ,
+   `caracteristique-id` int unsigned NOT NULL,
   `level-1-id` int unsigned NOT NULL,
   `occ` int unsigned NOT NULL DEFAULT '1',
   `c00` longtext COLLATE utf8mb3_unicode_ci,
@@ -47,7 +51,7 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `c01p` longtext COLLATE utf8mb3_unicode_ci,
   `c01` longtext COLLATE utf8mb3_unicode_ci,
   `c02` longtext COLLATE utf8mb3_unicode_ci,
-  `c03` int ,
+  `c03` int,
   `c04` longtext COLLATE utf8mb3_unicode_ci,
   `c05` longtext COLLATE utf8mb3_unicode_ci,
   `c05_jj` longtext COLLATE utf8mb3_unicode_ci,
@@ -101,7 +105,6 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `c18h` longtext COLLATE utf8mb3_unicode_ci,
   `c19a` longtext COLLATE utf8mb3_unicode_ci,
   `c19b` longtext COLLATE utf8mb3_unicode_ci,
-  `c19b_a` longtext COLLATE utf8mb3_unicode_ci,
   `c19c` longtext COLLATE utf8mb3_unicode_ci,
   `c19d` longtext COLLATE utf8mb3_unicode_ci,
   `c19e` longtext COLLATE utf8mb3_unicode_ci,
@@ -155,11 +158,11 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `temp_etat_matrimonial` longtext COLLATE utf8mb3_unicode_ci,
   `temp_fecondite` longtext COLLATE utf8mb3_unicode_ci,
   `temp_tic` longtext COLLATE utf8mb3_unicode_ci,
-   `tranche_age` varchar(7) DEFAULT NULL,
+  `tranche_age` varchar(7) DEFAULT NULL,
   `age_19_45` int NOT NULL DEFAULT '0',
   KEY `idx_caracteristique_stats` (`level-1-id`,`c03`,`c06`),
   KEY `idx_caracteristique_femmes_age` (`c03`,`c06`)
-) ENGINE=InnoDB AUTO_INCREMENT=195 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 
@@ -175,7 +178,7 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `deces-id` int NOT NULL,
+ `deces-id` int unsigned NOT NULL ,
   `level-1-id` int unsigned NOT NULL,
   `occ` int unsigned NOT NULL DEFAULT '1',
   `d02` longtext COLLATE utf8mb3_unicode_ci,
@@ -185,7 +188,7 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `d05` longtext COLLATE utf8mb3_unicode_ci,
   `d06` longtext COLLATE utf8mb3_unicode_ci,
   `d06_a` longtext COLLATE utf8mb3_unicode_ci
- ) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+ ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 
@@ -201,14 +204,14 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `elevage-id` int  NOT NULL,
+  `elevage-id` int unsigned NOT NULL,
   `level-1-id` int unsigned NOT NULL,
   `occ` int unsigned NOT NULL DEFAULT '1',
   `ag03e` longtext COLLATE utf8mb3_unicode_ci,
   `ag03l` longtext COLLATE utf8mb3_unicode_ci,
   `ag03a` longtext COLLATE utf8mb3_unicode_ci,
   `ag03b` longtext COLLATE utf8mb3_unicode_ci
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 
@@ -222,7 +225,7 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `emigration-id` int  NOT NULL,
+  `emigration-id` int unsigned NOT NULL,
   `level-1-id` int unsigned NOT NULL,
   `occ` int unsigned NOT NULL DEFAULT '1',
   `em02` longtext COLLATE utf8mb3_unicode_ci,
@@ -240,7 +243,7 @@ CREATE  TABLE if not exists `tcaracteristique` (
   `em11` longtext COLLATE utf8mb3_unicode_ci,
   `em12` longtext COLLATE utf8mb3_unicode_ci,
    KEY `idx_emigration_level1id` (`level-1-id`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 
@@ -256,7 +259,7 @@ CREATE TABLE if not exists `thabitat` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `habitat-id` int  NOT NULL,
+  `habitat-id` int unsigned NOT NULL,
   `level-1-id` int unsigned NOT NULL,
   `h01` longtext COLLATE utf8mb3_unicode_ci,
   `h01a` longtext COLLATE utf8mb3_unicode_ci,
@@ -321,7 +324,7 @@ CREATE TABLE if not exists `thabitat` (
   `h14(35)` longtext COLLATE utf8mb3_unicode_ci,
   `h14(36)` longtext COLLATE utf8mb3_unicode_ci,
   `h1426` longtext COLLATE utf8mb3_unicode_ci
-) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 
@@ -337,7 +340,7 @@ CREATE TABLE if not exists `tmenage` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `menage-id` int  NOT NULL,
+  `menage-id` int unsigned NOT NULL,
   `level-1-id` int unsigned NOT NULL,
   `id01` longtext COLLATE utf8mb3_unicode_ci,
   `id02` longtext COLLATE utf8mb3_unicode_ci,
@@ -388,12 +391,25 @@ CREATE TABLE if not exists `tmenage` (
   `meta_duration` longtext COLLATE utf8mb3_unicode_ci,
   `meta_calc_duration` longtext COLLATE utf8mb3_unicode_ci,
   `meta_intro` longtext COLLATE utf8mb3_unicode_ci,
-  `ag02i` longtext COLLATE utf8mb3_unicode_ci,
-  `ag02j` longtext COLLATE utf8mb3_unicode_ci,
   `tel_repondant` longtext COLLATE utf8mb3_unicode_ci,
+  `men_exist_denombrement` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(1)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(2)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(3)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(4)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(5)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(6)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(7)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(8)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(9)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(10)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(11)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(12)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(13)` longtext COLLATE utf8mb3_unicode_ci,
+  `ag02h(14)` longtext COLLATE utf8mb3_unicode_ci
    KEY `idx_menage_geo_filters` (`code_region`,`code_departement`,`code_commune`,`mo_zd`)
   -- KEY `idx_menage_stats` (`level-1-id`,`xm40`,`nb_residents`)
-) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 CREATE TABLE if not exists `tstats` (
@@ -406,19 +422,24 @@ CREATE TABLE if not exists `tstats` (
   `mo_zs` varchar(15) NOT NULL,
   `mo_zd` varchar(15) NOT NULL,
   `mo_id` int DEFAULT NULL,
-  `stats-id` int  NOT NULL,
-  `level-1-id` int  NOT NULL,
-  `nb_residents` int,
-  `nb_resident_presents` int,
-  `nb_rp_h` int,
-  `nb_rp_f` int,
-  `nb_rp` int,
-  `nb_rph` int,
-  `nb_ra` int,
-  `nb_rah` int,
-  `nb_raf` int,
-  `nb_v` int,
-  `nb_vh` int,
-  `nb_vf` int,
-  `nb_rv` int
-) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+  `stats-id` int unsigned NOT NULL,
+  `level-1-id` int unsigned NOT NULL,
+  `nb_residents_rp_ra` int,
+  `nb_residents_rp_ra_homme` int,
+  `nb_residents_rp_ra_femme` int,
+  `nb_resident_present_total_rp` int,
+  `nb_resident_present_homme_rp` int,
+  `nb_resident_present_femme_rp` int,
+  `nb_resident_absent_total_ra` int,
+  `nb_resident_absent_homme_ra` int,
+  `nb_resident_absent_femme_ra` int,
+  `nb_visiteur_total` int,
+  `nb_visiteur_homme` int,
+  `nb_visiteur_femme` int,
+  `nb_total_membre_menage_rp_ra_vi` int,
+  `nb_total_membre_menage_homme_rp_ra_vi` int,
+  `nb_total_membre_menage_femme_rp_ra_vi` int,
+  `nb_total_membre_menage_present_visiteur_rp_vi` int,
+  `nb_total_membre_menage_present_visiteur_homme_rp` int,
+  `nb_total_membre_menage_present_visiteur_femme_rp` int
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;

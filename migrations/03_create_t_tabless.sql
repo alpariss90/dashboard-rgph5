@@ -407,7 +407,7 @@ CREATE TABLE if not exists `tmenage` (
   `ag02h(12)` longtext COLLATE utf8mb3_unicode_ci,
   `ag02h(13)` longtext COLLATE utf8mb3_unicode_ci,
   `ag02h(14)` longtext COLLATE utf8mb3_unicode_ci
-   KEY `idx_menage_geo_filters` (`code_region`,`code_departement`,`code_commune`,`mo_zd`)
+   -- KEY `idx_menage_geo_filters` (`code_region`,`code_departement`,`code_commune`,`mo_zd`)
   -- KEY `idx_menage_stats` (`level-1-id`,`xm40`,`nb_residents`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 

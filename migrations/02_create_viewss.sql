@@ -78,7 +78,8 @@ select
     `a`.`ag02f` AS `ag02f`,
     `a`.`ag02ga` AS `ag02e1`,
     `a`.`ag02gb` AS `ag02e2`,
-    `a`.`ag02h` AS `ag02h`
+    `a`.`ag02i` AS `ag02i`,
+    `a`.`ag02j` AS `ag02j`
 from
     (`tlevel1` `l`
 join `agriculture` `a`)
@@ -164,7 +165,6 @@ select
 
     `a`.`c19a` AS `c19a`,
 `a`.`c19b` AS `c19b`,
-`a`.`c19b_a` AS `c19b_a`,
 `a`.`c19c` AS `c19c`,
 `a`.`c19d` AS `c19d`,
 `a`.`c19e` AS `c19e`,
@@ -308,19 +308,24 @@ select
     `l`.`mo_id` AS `mo_id`,
     `a`.`stats-id` AS `stats-id`,
     `a`.`level-1-id` AS `level-1-id`,
-    `a`.`nb_residents` AS `nb_residents`,
-    `a`.`nb_resident_presents` AS `nb_resident_presents`,
-    `a`.`nb_rp_h` AS `nb_rp_h`,
-    `a`.`nb_rp_f` AS `nb_rp_f`,
-`a`.`nb_rp` AS `nb_rp`,
-`a`.`nb_rph` AS `nb_rph`,
-`a`.`nb_ra` AS `nb_ra`,
-`a`.`nb_rah` AS `nb_rah`,
-`a`.`nb_raf` AS `nb_raf`,
-`a`.`nb_v` AS `nb_v`,
-`a`.`nb_vh` AS `nb_vh`,
-`a`.`nb_vf` AS `nb_vf`,
-`a`.`nb_rv` AS `nb_rv`
+    `a`.`nb_residents_rp_ra` AS `nb_residents_rp_ra`,
+    `a`.`nb_residents_rp_ra_homme` AS `nb_residents_rp_ra_homme`,
+    `a`.`nb_residents_rp_ra_femme` AS `nb_residents_rp_ra_femme`,
+    `a`.`nb_resident_present_total_rp` AS `nb_resident_present_total_rp`,
+    `a`.`nb_resident_present_homme_rp` AS `nb_resident_present_homme_rp`,
+    `a`.`nb_resident_present_femme_rp` AS `nb_resident_present_femme_rp`,
+    `a`.`nb_resident_absent_total_ra` AS `nb_resident_absent_total_ra`,
+    `a`.`nb_resident_absent_homme_ra` AS `nb_resident_absent_homme_ra`,
+    `a`.`nb_resident_absent_femme_ra` AS `nb_resident_absent_femme_ra`,
+    `a`.`nb_visiteur_total` AS `nb_visiteur_total`,
+    `a`.`nb_visiteur_homme` AS `nb_visiteur_homme`,
+    `a`.`nb_visiteur_femme` AS `nb_visiteur_femme`,
+    `a`.`nb_total_membre_menage_rp_ra_vi` AS `nb_total_membre_menage_rp_ra_vi`,
+    `a`.`nb_total_membre_menage_homme_rp_ra_vi` AS `nb_total_membre_menage_homme_rp_ra_vi`,
+    `a`.`nb_total_membre_menage_femme_rp_ra_vi` AS `nb_total_membre_menage_femme_rp_ra_vi`,
+    `a`.`nb_total_membre_menage_present_visiteur_rp_vi` AS `nnb_total_membre_menage_present_visiteur_rp_vi`,
+    `a`.`nb_total_membre_menage_present_visiteur_homme_rp` AS `nb_total_membre_menage_present_visiteur_homme_rp`,
+    `a`.`nb_total_membre_menage_present_visiteur_femme_rp` AS `nb_total_membre_menage_present_visiteur_femme_rp`
 from
     (`tlevel1` `l`
 join `stats` `a`)
@@ -490,8 +495,8 @@ select
  `a`.`xm11_aaaa` AS `xm11_aaaa`,
 
     `a`.`xm12` AS `xm12`,
-    `a`.`xm12H` AS `xm12H`,
-    `a`.`xm12M` AS `xm12M`,
+    `a`.`xm12h` AS `xm12h`,
+    `a`.`xm12m` AS `xm12m`,
 
  `a`.`xm13` AS `xm13`,
  `a`.`xm13_jj` AS `xm13_jj`,
@@ -499,8 +504,8 @@ select
  `a`.`xm13_aaaa` AS `xm13_aaaa`,
 
      `a`.`xm14` AS `xm14`,
-    `a`.`xm14H` AS `xm14H`,
-    `a`.`xm14M` AS `xm14M`,
+    `a`.`xm14h` AS `xm14h`,
+    `a`.`xm14m` AS `xm14m`,
 
     `a`.`xm50` AS `xm50`,
     `a`.`xm20` AS `xm20`,
@@ -522,9 +527,22 @@ select
 `a`.`meta_duration` AS `meta_duration`,
 `a`.`meta_calc_duration` AS `meta_calc_duration`,
 `a`.`meta_intro` AS `meta_intro`,
-`a`.`ag02i` AS `ag02i`,
-`a`.`ag02j` AS `ag02j`,
-`a`.`tel_repondant` AS `tel_repondant`
+`a`.`tel_repondant` AS `tel_repondant`,
+`a`.`men_exist_denombrement` AS `men_exist_denombrement`,
+`a`.`ag02h(1)` AS `ag02h(1)`,
+`a`.`ag02h(2)` AS `ag02h(2)`,
+`a`.`ag02h(3)` AS `ag02h(3)`,
+`a`.`ag02h(4)` AS `ag02h(4)`,
+`a`.`ag02h(5)` AS `ag02h(5)`,
+`a`.`ag02h(6)` AS `ag02h(6)`,
+`a`.`ag02h(7)` AS `ag02h(7)`,
+`a`.`ag02h(8)` AS `ag02h(8)`,
+`a`.`ag02h(9)` AS `ag02h(9)`,
+`a`.`ag02h(10)` AS `ag02h(10)`,
+`a`.`ag02h(11)` AS `ag02h(11)`,
+`a`.`ag02h(12)` AS `ag02h(12)`,
+`a`.`ag02h(13)` AS `ag02h(13)`,
+`a`.`ag02h(14)` AS `ag02h(14)`
 from
     (`tlevel1` `l`
 join `menage` `a`)

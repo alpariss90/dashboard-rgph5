@@ -162,6 +162,7 @@ async function getMainStats(filters = {}, user = null) {
       populationRurale: Number(row.population_rurale || 0),
       menagesEnumeres: Number(row.menages_enumeres || 0),
       menagesDenombres: Number(row.menages_denombres || 0),
+      menagesAttendus: Number(row.total_menages_attendu || 0),
       enmcd: { 
         ecart: Number(row.menages_enumeres || 0) - Number(row.menages_denombres || 0)
       },

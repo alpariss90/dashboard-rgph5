@@ -149,6 +149,21 @@
 						</div>
 					</div>
 				</div>	
+                <div class="col"  >
+					<div class="mt-3 mt-md-0 py-4 px-3">
+						<h5 class="text-muted text-uppercase fs-13">NB MEN ATTENDUS
+							<i class="ri-team-fill text-success fs-18 float-end align-middle"></i>
+						</h5>
+						<div class="d-flex align-items-center">
+							<div class="flex-shrink-0">
+								<i class="ri-team-fill display-6 text-muted cfs-22"></i>
+							</div>
+							<div class="flex-grow-1 ms-3">
+								<h2 class="mb-0 cfs-22"><span id="menAttendusSpan" class="counter-value"><%= stats.menagesAttendus ?? 0 %></span></h2>
+							</div>
+						</div>
+					</div>
+				</div>	
 				<div class="col" >
 					<div class="mt-3 mt-md-0 py-4 px-3">
 						<h5 class="text-muted text-uppercase fs-13">TOTAL HOMMES
@@ -301,11 +316,11 @@
 				<div class="col">
 					<div class="mt-3 mt-lg-0 py-4 px-3">
 						<h5 class="text-muted text-uppercase fs-13">TAILLE MOYENNE MENAGE
-							<i class="ri-percent-line text-danger fs-18 float-end align-middle"></i>
+							<i class="ri-team-line text-danger fs-18 float-end align-middle"></i>
 						</h5>
 						<div class="d-flex align-items-center">
 							<div class="flex-shrink-0">
-								<i class="ri-percent-line display-6 text-muted cfs-22"></i>
+								<i class="ri-team-line display-6 text-muted cfs-22"></i>
 							</div>
 							<div class="flex-grow-1 ms-3">
 								<h2 class="mb-0 cfs-22">
@@ -570,6 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statsSpans = {
     menEnumeresSpan: 'mainStats.menagesEnumeres',
     menDenombresSpan: 'mainStats.menagesDenombres',
+    menAttendusSpan: 'mainStats.menagesAttendus',
 	  decesSpan: 'mainStats.averageDeces',
 	  popCartoSpan: 'mainStats.cartographie',
     tauxProgressionSpan: 'mainStats.tauxProgressionCollecte',

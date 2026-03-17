@@ -4,16 +4,18 @@
 -- =====================================================
 
 
-SET SESSION sql_mode = 'TRADITIONAL';
+-- SET SESSION sql_mode = 'TRADITIONAL';
  
 -- =====================================================
 -- 1. STATS NATIONALES
 -- =====================================================
 
-SELECT '📊 Calcul des statistiques nationales...' AS status;
+
+SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
 
 UPDATE stats_nationales SET
     -- Stats ménages
+    total_menages_attendu = (SELECT sum(zd_men) FROM zd),
     total_menages = (SELECT COUNT(*) FROM tmenage),
     total_population = (SELECT COALESCE(SUM(nb_residents_rp_ra), 0) FROM tstats),
     nb_menages_plus_10 = (SELECT COUNT(*) FROM tmenage WHERE xm40 > 10),
@@ -21,7 +23,7 @@ UPDATE stats_nationales SET
     population_rurale = (SELECT SUM(XM40) FROM tmenage WHERE xm01 = 2),
     menages_enumeres = (SELECT COUNT(*) FROM tmenage WHERE xm30 > 0),
     menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 1),
-    population_carto = (SELECT COALESCE(SUM(xm20), 0) FROM tmenage),
+    population_carto = (SELECT sum(zd_pop) FROM zd),
     population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
     
     -- Requete nouvelle ajouté
@@ -55,7 +57,7 @@ SELECT '📊 Calcul des statistiques par région...' AS status;
 TRUNCATE TABLE stats_par_region;
 
 INSERT INTO stats_par_region (
-    code_region, region,
+    code_region, region, total_menages_attendu,
     total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
     population_rurale, menages_enumeres, menages_denombres,
     population_carto, population_collectee,
@@ -67,6 +69,7 @@ INSERT INTO stats_par_region (
 SELECT 
     H.code_region,
     H.region,
+    J.total_menages_attendu,
     H.total_menages,
     H.total_population,
     H.nb_menages_plus_10,
@@ -74,7 +77,7 @@ SELECT
     H.population_rurale,
     H.menages_enumeres,
     H.menages_denombres,
-    H.population_carto,
+    J.population_carto,
     H.population_collectee,
     H.total_deces, -- Insertion de la somme
     -- Données venant de la table Population (P)
@@ -100,7 +103,7 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        COALESCE(SUM(xm20), 0) as population_carto,
+        -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces -- SOMME DES DÉCÈS
      FROM tmenage 
@@ -136,7 +139,15 @@ FROM
         FROM temigration e
         INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_region
-    ) E ON H.code_region = E.code_region;
+    ) E ON H.code_region = E.code_region
+    -- 5. Jointure avec zd
+    LEFT JOIN (
+        SELECT  substr(e.zd_zd, 1,1) as code_region, 
+               sum(e.zd_men) as total_menages_attendu,
+                sum(e.zd_pop) as population_carto
+        FROM zd e
+        GROUP BY substr(e.zd_zd, 1,1)
+    ) J ON H.code_region = J.code_region;
 
 SELECT '✅ Stats par région CORRIGÉES (Join)' AS status;
 
@@ -149,7 +160,7 @@ TRUNCATE TABLE stats_par_departement;
 
 INSERT INTO stats_par_departement (
     code_region, code_departement, departement,
-    total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
+    total_menages_attendu, total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
     population_rurale, menages_enumeres, menages_denombres,
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
@@ -158,9 +169,9 @@ INSERT INTO stats_par_departement (
 )
 SELECT 
     H.code_region, H.code_departement, H.departement,
-    H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
+    J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    H.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee, H.total_deces,
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
     COALESCE(P.nb_residents_absents, 0), COALESCE(P.nb_visiteurs, 0),
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
@@ -174,7 +185,8 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        COALESCE(SUM(xm20), 0) as population_carto, COALESCE(SUM(xm40), 0) as population_collectee,
+        -- COALESCE(SUM(xm20), 0) as population_carto, 
+        COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
     LEFT JOIN (
@@ -199,7 +211,15 @@ FROM
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_departement
-    ) E ON H.code_departement = E.code_departement;
+    ) E ON H.code_departement = E.code_departement
+     -- 5. Jointure avec zd
+    LEFT JOIN (
+        SELECT  substr(e.zd_zd, 1,3) as code_departement, 
+               sum(e.zd_men) as total_menages_attendu,
+                sum(e.zd_pop) as population_carto
+        FROM zd e
+        GROUP BY substr(e.zd_zd, 1,3)
+    ) J ON H.code_departement = J.code_departement;
 
 SELECT '✅ Stats par département CORRIGÉES' AS status;
 
@@ -213,7 +233,7 @@ TRUNCATE TABLE stats_par_commune;
 
 INSERT INTO stats_par_commune (
     code_region, code_departement, code_commune, commune,
-    total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
+    total_menages_attendu, total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
     population_rurale, menages_enumeres, menages_denombres,
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
@@ -222,9 +242,9 @@ INSERT INTO stats_par_commune (
 )
 SELECT 
     H.code_region, H.code_departement, H.code_commune, H.commune,
-    H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
+    J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    H.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee, H.total_deces,
     
     -- Population (P)
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
@@ -243,7 +263,8 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        COALESCE(SUM(xm20), 0) as population_carto, COALESCE(SUM(xm40), 0) as population_collectee,
+        -- COALESCE(SUM(xm20), 0) as population_carto,
+        COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, commune
@@ -278,7 +299,15 @@ FROM
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_commune
-    ) E ON H.code_commune = E.code_commune;
+    ) E ON H.code_commune = E.code_commune
+    -- 5. Jointure avec zd
+    LEFT JOIN (
+        SELECT  e.zd_commune as code_commune, 
+               sum(e.zd_men) as total_menages_attendu,
+                sum(e.zd_pop) as population_carto
+        FROM zd e
+        GROUP BY e.zd_commune
+    ) J ON H.code_commune = J.code_commune;
 
 SELECT '✅ Stats par commune CORRIGÉES (Join)' AS status;
 
@@ -294,7 +323,7 @@ TRUNCATE TABLE stats_par_zd;
 
 INSERT INTO stats_par_zd (
     code_region, code_departement, code_commune, mo_zd,
-    total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
+    total_menages_attendu, total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
     population_rurale, menages_enumeres, menages_denombres,
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
@@ -303,9 +332,9 @@ INSERT INTO stats_par_zd (
 )
 SELECT 
     H.code_region, H.code_departement, H.code_commune, H.mo_zd,
-    H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
+    J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    H.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee, H.total_deces,
     
     -- Population (P)
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
@@ -324,7 +353,8 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        COALESCE(SUM(xm20), 0) as population_carto, COALESCE(SUM(xm40), 0) as population_collectee,
+        -- COALESCE(SUM(xm20), 0) as population_carto,
+        COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, mo_zd
@@ -359,7 +389,15 @@ FROM
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.mo_zd
-    ) E ON H.mo_zd = E.mo_zd;
+    ) E ON H.mo_zd = E.mo_zd
+    -- 5. Jointure avec zd
+    LEFT JOIN (
+        SELECT  e.zd_zd as mo_zd, 
+               sum(e.zd_men) as total_menages_attendu,
+                sum(e.zd_pop) as population_carto
+        FROM zd e
+        GROUP BY e.zd_zd
+    ) J ON H.mo_zd = J.mo_zd;
 
 SELECT '✅ Stats par ZD CORRIGÉES (Join)' AS status;
 

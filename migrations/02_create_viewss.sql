@@ -151,7 +151,6 @@ select
  `a`.`c14lp` AS `c14lp`,
  `a`.`c14me` AS `c14me`,
  `a`.`c14ae` AS `c14ae`,
-
       `a`.`c16` AS `c16`,
        `a`.`c17` AS `c17`,
     `a`.`c18a` AS `c18a`,
@@ -162,7 +161,6 @@ select
  `a`.`c18f` AS `c18f`,
  `a`.`c18g` AS `c18g`,
  `a`.`c18h` AS `c18h`,
-
     `a`.`c19a` AS `c19a`,
 `a`.`c19b` AS `c19b`,
 `a`.`c19c` AS `c19c`,
@@ -170,7 +168,6 @@ select
 `a`.`c19e` AS `c19e`,
 `a`.`c19ec` AS `c19ec`,
 `a`.`c19f` AS `c19f`,
-
     `a`.`c20` AS `c20`,
 `a`.`c20a` AS `c20a`,
     `a`.`c21` AS `c21`,
@@ -209,7 +206,6 @@ select
 `a`.`ind_status` AS `ind_status`,
     `a`.`membre_controle` AS `membre_controle`,
     `a`.`is_deleted` AS `is_deleted`,
-
 `a`.`temp_nais` AS `temp_nais`,
 `a`.`temp_migration` AS `temp_migration`,
 `a`.`temp_migration_1` AS `temp_migration_1`,
@@ -493,20 +489,16 @@ select
  `a`.`xm11_jj` AS `xm11_jj`,
  `a`.`xm11_mm` AS `xm11_mm`,
  `a`.`xm11_aaaa` AS `xm11_aaaa`,
-
     `a`.`xm12` AS `xm12`,
     `a`.`xm12h` AS `xm12h`,
     `a`.`xm12m` AS `xm12m`,
-
  `a`.`xm13` AS `xm13`,
  `a`.`xm13_jj` AS `xm13_jj`,
  `a`.`xm13_mm` AS `xm13_mm`,
  `a`.`xm13_aaaa` AS `xm13_aaaa`,
-
      `a`.`xm14` AS `xm14`,
     `a`.`xm14h` AS `xm14h`,
     `a`.`xm14m` AS `xm14m`,
-
     `a`.`xm50` AS `xm50`,
     `a`.`xm20` AS `xm20`,
     `a`.`xm30` AS `xm30`,

@@ -3,7 +3,7 @@
 -- Ces tables stockent des statistiques calculées à l'avance
 -- =====================================================
 
-USE menage;
+-- USE menage;
 
 -- =====================================================
 -- 1. TABLE STATS PAR RÉGION
@@ -17,6 +17,7 @@ CREATE TABLE stats_par_region (
     region VARCHAR(100),
     
     -- Stats ménages
+    total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
     nb_menages_plus_10 INT DEFAULT 0,
@@ -60,6 +61,7 @@ CREATE TABLE stats_par_departement (
     departement VARCHAR(100),
     
     -- Stats ménages
+    total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
     nb_menages_plus_10 INT DEFAULT 0,
@@ -105,6 +107,7 @@ CREATE TABLE stats_par_commune (
     commune VARCHAR(100),
     
     -- Stats ménages
+    total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
     nb_menages_plus_10 INT DEFAULT 0,
@@ -150,6 +153,7 @@ CREATE TABLE stats_par_zd (
     mo_zd VARCHAR(20), -- Identifiant de la ZD
     
     -- Stats ménages
+    total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
     nb_menages_plus_10 INT DEFAULT 0,
@@ -264,6 +268,7 @@ CREATE TABLE stats_nationales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     
     -- Stats ménages
+    total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
     nb_menages_plus_10 INT DEFAULT 0,

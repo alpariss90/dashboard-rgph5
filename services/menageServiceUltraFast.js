@@ -155,7 +155,7 @@ async function getMainStats(filters = {}, user = null) {
       totalMenages: Number(row.total_menages || 0),
       totalPopulation: Number(row.total_population || 0),
       averageDeces: row.total_menages > 0 
-          ? Number(((totalDeces / row.total_menages) * 100 ).toFixed(2)) 
+          ? Number(((totalDeces / row.total_menages)).toFixed(2)) 
           : 0,
       nbMenagesPlus10: Number(row.nb_menages_plus_10 || 0),
       nbMenagesSolo: Number(row.nb_menages_solo || 0),
@@ -342,7 +342,7 @@ async function getPyramideAges(filters = {}, user = null) {
     
     const rows = await menageDB.query(sql, { replacements, type: QueryTypes.SELECT });
     
-    console.log(`⚡ getPyramideAges (ULTRA-FAST) exécutée en ${Date.now() - startTime}ms`);
+    console.log(`getPyramideAges (ULTRA-FAST) exécutée en ${Date.now() - startTime}ms`);
     
     return rows.map(r => ({ 
       age: r.age_range, 

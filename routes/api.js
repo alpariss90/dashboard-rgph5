@@ -46,57 +46,62 @@ router.get('/stats/regions', async (req, res) => {
     try {
         const sql = `
             SELECT
-                code_region AS regionCode,
-                region AS regionName,
-                SUM(xm20) AS populationCarto,
-                SUM(xm40) AS populationCollectee
-            FROM tmenage
-            GROUP BY code_region, region
-            ORDER BY region ASC
+                tm.code_region AS regionCode,
+                tm.region AS regionName,
+                COALESCE(zr.populationCarto, 0) AS populationCarto,
+                SUM(tm.xm40) AS populationCollectee
+            FROM tmenage tm
+            LEFT JOIN (
+                SELECT
+                    SUBSTRING(zd_zd, 1, 1) AS code_region,
+                    SUM(CAST(zd_pop AS UNSIGNED)) AS populationCarto
+                FROM zd
+                GROUP BY SUBSTRING(zd_zd, 1, 1)
+            ) zr ON zr.code_region = tm.code_region
+            GROUP BY tm.code_region, tm.region, zr.populationCarto
+            ORDER BY tm.region ASC
         `;
+
         const rows = await menageDB.query(sql, { type: QueryTypes.SELECT });
-        
-        // Mapping des codes aux noms MAJUSCULES (comme dans le GeoJSON)
+
         const codeToUpperCaseName = {
             'NER001': 'AGADEZ',
-            'NER002': 'DIFFA', 
+            'NER002': 'DIFFA',
             'NER003': 'DOSSO',
             'NER004': 'MARADI',
             'NER005': 'TAHOUA',
             'NER006': 'TILLABERI',
             'NER007': 'ZINDER',
-            'NER008': 'NIAMEY'  // Note: dans votre GeoJSON, Niamey est NER008
+            'NER008': 'NIAMEY'
         };
-        
+
         const result = rows.map(r => {
-            // Utiliser le mapping code -> nom MAJUSCULE
-            const upperCaseName = codeToUpperCaseName[r.regionCode] || 
-                                 (r.regionName ? r.regionName.toUpperCase().trim() : '');
-            
+            const upperCaseName =
+                codeToUpperCaseName[r.regionCode] ||
+                (r.regionName ? r.regionName.toUpperCase().trim() : '');
+
             return {
-                // Retourner les deux formats pour plus de flexibilité
-                regionName: upperCaseName,           // "AGADEZ" (pour matching avec GeoJSON)
-                regionDisplayName: r.regionName,     // "Agadez" (pour affichage)
-                regionCode: r.regionCode,            // "NER001"
+                regionName: upperCaseName,
+                regionDisplayName: r.regionName,
+                regionCode: r.regionCode,
                 populationCarto: Number(r.populationCarto || 0),
                 populationCollectee: Number(r.populationCollectee || 0)
             };
         });
-        
-        // Log pour debug
+
         console.log('📊 Statistiques régions préparées:');
         result.forEach(r => {
-            console.log(`  Code: ${r.regionCode} | GeoJSON: ${r.regionName} | Original: ${r.regionDisplayName}`);
-            console.log(`    Carto: ${r.populationCarto} | Collectée: ${r.populationCollectee}`);
+            console.log(`Code: ${r.regionCode} | GeoJSON: ${r.regionName} | Original: ${r.regionDisplayName}`);
+            console.log(`Carto: ${r.populationCarto} | Collectée: ${r.populationCollectee}`);
         });
-        
+
         res.json(result);
-        
+
     } catch (error) {
         console.error('❌ Erreur API régions:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Erreur serveur',
-            details: error.message 
+            details: error.message
         });
     }
 });
@@ -106,29 +111,46 @@ router.get('/stats/departements', async (req, res) => {
     try {
         const sql = `
             SELECT
-                code_departement AS departementCode,
-                departement AS departementName,
-                region,
-                SUM(xm20) AS populationCarto,
-                SUM(xm40) AS populationCollectee
-            FROM tmenage
-            GROUP BY code_departement, departement, region
-            ORDER BY region, departement ASC
+                tm.code_departement AS departementCode,
+                tm.departement AS departementName,
+                tm.code_region AS regionCode,
+                tm.region AS regionName,
+                COALESCE(zdg.populationCarto, 0) AS populationCarto,
+                SUM(tm.xm40) AS populationCollectee
+            FROM tmenage tm
+            LEFT JOIN (
+                SELECT
+                    SUBSTRING(TRIM(zd_zd), 1, 3) AS code_departement,
+                    SUM(CAST(TRIM(zd_pop) AS UNSIGNED)) AS populationCarto
+                FROM zd
+                GROUP BY SUBSTRING(TRIM(zd_zd), 1, 3)
+            ) zdg ON zdg.code_departement = tm.code_departement
+            GROUP BY
+                tm.code_departement,
+                tm.departement,
+                tm.code_region,
+                tm.region,
+                zdg.populationCarto
+            ORDER BY tm.region ASC, tm.departement ASC
         `;
+
         const rows = await menageDB.query(sql, { type: QueryTypes.SELECT });
-        
+
         const result = rows.map(r => ({
+            departementCode: r.departementCode,
             departement: r.departementName,
             region: r.region,
             populationCarto: Number(r.populationCarto || 0),
             populationCollectee: Number(r.populationCollectee || 0)
         }));
-        
+
         res.json(result);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erreur serveur' });
+        console.error('❌ Erreur API départements:', error);
+        res.status(500).json({
+            error: 'Erreur serveur',
+            details: error.message
+        });
     }
 });
-
 module.exports = router;

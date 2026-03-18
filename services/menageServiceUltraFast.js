@@ -162,6 +162,7 @@ async function getMainStats(filters = {}, user = null) {
       populationRurale: Number(row.population_rurale || 0),
       menagesEnumeres: Number(row.menages_enumeres || 0),
       menagesDenombres: Number(row.menages_denombres || 0),
+      menagesAttendus: Number(row.total_menages_attendu || 0),
       enmcd: { 
         ecart: Number(row.menages_enumeres || 0) - Number(row.menages_denombres || 0)
       },
@@ -354,13 +355,20 @@ async function getPyramideAges(filters = {}, user = null) {
 async function getPopulationByRegion() {
   const sql = `
     SELECT
-      code_region AS regionCode,
-      region AS regionName,
-      SUM(xm20) AS populationCarto,
-      SUM(xm40) AS populationCollectee
-    FROM tmenage
-    GROUP BY code_region, region
-    ORDER BY region ASC
+                tm.code_region AS regionCode,
+                tm.region AS regionName,
+                COALESCE(zr.populationCarto, 0) AS populationCarto,
+                SUM(tm.xm40) AS populationCollectee
+            FROM tmenage tm
+            LEFT JOIN (
+                SELECT
+                    SUBSTRING(zd_zd, 1, 1) AS code_region,
+                    SUM(CAST(zd_pop AS UNSIGNED)) AS populationCarto
+                FROM zd
+                GROUP BY SUBSTRING(zd_zd, 1, 1)
+            ) zr ON zr.code_region = tm.code_region
+            GROUP BY tm.code_region, tm.region, zr.populationCarto
+            ORDER BY tm.region ASC
   `;
   const rows = await menageDB.query(sql, { type: QueryTypes.SELECT });
   return rows.map(r => ({

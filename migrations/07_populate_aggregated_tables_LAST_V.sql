@@ -17,7 +17,7 @@ UPDATE stats_nationales SET
     -- Stats ménages
     total_menages_attendu = (SELECT sum(zd_men) FROM zd),
     total_menages = (SELECT COUNT(*) FROM tmenage),
-    total_population = (SELECT COALESCE(SUM(nb_residents_rp_ra), 0) FROM tstats),
+    total_population = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
     nb_menages_plus_10 = (SELECT COUNT(*) FROM tmenage WHERE xm40 > 10),
     nb_menages_solo = (SELECT COUNT(*) FROM tmenage WHERE xm40 = 1),
     population_rurale = (SELECT SUM(XM40) FROM tmenage WHERE xm01 = 2),
@@ -33,15 +33,26 @@ UPDATE stats_nationales SET
     hommes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 1),
     femmes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2),
     nb_enfants_moins_5 = (SELECT COUNT(*) FROM tcaracteristique WHERE c06 < 5),
-    nb_residents_absents = (SELECT sum(nb_resident_absent_total_ra) FROM tstats),
-    nb_visiteurs = (SELECT sum(nb_visiteur_total) FROM tstats),
+    nb_residents_absents = (SELECT COUNT(*) FROM tcaracteristique c INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id` WHERE c.c04 = 2),
+    nb_visiteurs = (SELECT COUNT(*) FROM tcaracteristique c INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id` WHERE c.c04 = 3),
     nb_naissances_vivantes = (SELECT COALESCE(SUM(c30t), 0) FROM tcaracteristique WHERE c30t > 0),
     nb_femmes_15_49 = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2 AND c06 BETWEEN 15 AND 49),
     
     -- Stats agricoles et émigration
     menages_agricoles = (SELECT COUNT(DISTINCT `level-1-id`) FROM tagriculture),
-    total_emigres = (SELECT COALESCE(count(em02), 0) FROM temigration),
-    menages_avec_emigres = (SELECT COUNT(DISTINCT `level-1-id`) FROM temigration),
+    -- Correction : On joint temigration avec tmenage pour exclure les orphelins
+    total_emigres = (
+        SELECT COUNT(e.em02) 
+        FROM temigration e 
+        INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+    ),
+    
+    -- Correction : On compte les ménages distincts présents dans les deux tables
+    menages_avec_emigres = (
+        SELECT COUNT(DISTINCT e.`level-1-id`) 
+        FROM temigration e 
+        INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+    ),
     
     date_maj = NOW()
 WHERE id = 1;
@@ -134,7 +145,7 @@ FROM
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.code_region, 
-               COALESCE(count(*), 0) as total_emigres,
+               COALESCE(COUNT(e.em02), 0) as total_emigres,
                COUNT(DISTINCT  e.`level-1-id` ) as menages_avec_emigres
         FROM temigration e
         INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
@@ -207,7 +218,7 @@ FROM
         GROUP BY m.code_departement
     ) A ON H.code_departement = A.code_departement
     LEFT JOIN (
-        SELECT m.code_departement, COALESCE(SUM(e.em02), 0) as total_emigres,
+        SELECT m.code_departement, COALESCE(COUNT(e.em02), 0) as total_emigres,
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
         GROUP BY m.code_departement
@@ -294,7 +305,7 @@ FROM
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.code_commune, 
-               COALESCE(SUM(e.em02), 0) as total_emigres,
+               COALESCE(COUNT(e.em02), 0) as total_emigres,
                -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
@@ -384,7 +395,7 @@ FROM
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.mo_zd, 
-               COALESCE(SUM(e.em02), 0) as total_emigres,
+               COALESCE(COUNT(e.em02), 0) as total_emigres,
                -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
                COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
         FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`

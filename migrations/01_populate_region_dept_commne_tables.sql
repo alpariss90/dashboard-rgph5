@@ -38,7 +38,7 @@ INSERT INTO departement (id,region_id,code,libelle,latitude,longitude) VALUES
 	 (26,4,'406','MADAROUNFA',NULL,NULL),
 	 (27,4,'406','MAYAHI',NULL,NULL),
 	 (28,4,'407','TESSAOUA',NULL,NULL),
-	 (29,4,'490','MARADI',NULL,NULL),
+	 (29,4,'490','VILLE DE MARADI',NULL,NULL),
 	 (30,5,'501','ABALAK',NULL,NULL),
 	 (31,5,'502','BAGAROUA',NULL,NULL),
 	 (32,5,'503','BIRNI N’KONNI',NULL,NULL),

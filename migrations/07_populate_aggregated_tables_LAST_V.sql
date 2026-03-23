@@ -28,7 +28,7 @@ UPDATE stats_nationales SET
     population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
     
     -- Requete nouvelle ajouté
-    average_deces = (SELECT COALESCE(SUM(d01), 0) FROM tmenage),
+    average_deces = (SELECT COALESCE(COUNT(d00), 0) FROM tmenage),
     
     -- Stats population
     hommes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 1),

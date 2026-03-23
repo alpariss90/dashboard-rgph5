@@ -15,8 +15,6 @@ CREATE TABLE stats_par_region (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code_region VARCHAR(10),
     region VARCHAR(100),
-    
-    -- Stats ménages
     total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
@@ -25,11 +23,10 @@ CREATE TABLE stats_par_region (
     population_rurale INT DEFAULT 0,
     menages_enumeres INT DEFAULT 0,
     menages_denombres INT DEFAULT 0,
+    menages_denombres_incomplets INT DEFAULT 0,
     population_carto INT DEFAULT 0,
     population_collectee INT DEFAULT 0,
     average_deces INT DEFAULT 0,
-    
-    -- Stats population
     hommes INT DEFAULT 0,
     femmes INT DEFAULT 0,
     nb_enfants_moins_5 INT DEFAULT 0,
@@ -37,8 +34,6 @@ CREATE TABLE stats_par_region (
     nb_visiteurs INT DEFAULT 0,
     nb_naissances_vivantes INT DEFAULT 0,
     nb_femmes_15_49 INT DEFAULT 0,
-    
-    -- Stats agricoles et émigration
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
@@ -59,8 +54,6 @@ CREATE TABLE stats_par_departement (
     code_region VARCHAR(10),
     code_departement VARCHAR(10),
     departement VARCHAR(100),
-    
-    -- Stats ménages
     total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
@@ -69,11 +62,10 @@ CREATE TABLE stats_par_departement (
     population_rurale INT DEFAULT 0,
     menages_enumeres INT DEFAULT 0,
     menages_denombres INT DEFAULT 0,
+    menages_denombres_incomplets INT DEFAULT 0,
     population_carto INT DEFAULT 0,
     population_collectee INT DEFAULT 0,
     average_deces INT DEFAULT 0,
-    
-    -- Stats population
     hommes INT DEFAULT 0,
     femmes INT DEFAULT 0,
     nb_enfants_moins_5 INT DEFAULT 0,
@@ -81,8 +73,6 @@ CREATE TABLE stats_par_departement (
     nb_visiteurs INT DEFAULT 0,
     nb_naissances_vivantes INT DEFAULT 0,
     nb_femmes_15_49 INT DEFAULT 0,
-    
-    -- Stats agricoles et émigration
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
@@ -105,8 +95,6 @@ CREATE TABLE stats_par_commune (
     code_departement VARCHAR(10),
     code_commune VARCHAR(10),
     commune VARCHAR(100),
-    
-    -- Stats ménages
     total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
@@ -115,11 +103,10 @@ CREATE TABLE stats_par_commune (
     population_rurale INT DEFAULT 0,
     menages_enumeres INT DEFAULT 0,
     menages_denombres INT DEFAULT 0,
+    menages_denombres_incomplets INT DEFAULT 0,
     population_carto INT DEFAULT 0,
     population_collectee INT DEFAULT 0,
     average_deces INT DEFAULT 0,
-    
-    -- Stats population
     hommes INT DEFAULT 0,
     femmes INT DEFAULT 0,
     nb_enfants_moins_5 INT DEFAULT 0,
@@ -127,8 +114,6 @@ CREATE TABLE stats_par_commune (
     nb_visiteurs INT DEFAULT 0,
     nb_naissances_vivantes INT DEFAULT 0,
     nb_femmes_15_49 INT DEFAULT 0,
-    
-    -- Stats agricoles et émigration
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
@@ -150,9 +135,7 @@ CREATE TABLE stats_par_zd (
     code_region VARCHAR(10),
     code_departement VARCHAR(10),
     code_commune VARCHAR(10),
-    mo_zd VARCHAR(20), -- Identifiant de la ZD
-    
-    -- Stats ménages
+    mo_zd VARCHAR(20),
     total_menages_attendu INT DEFAULT 0,
     total_menages INT DEFAULT 0,
     total_population BIGINT DEFAULT 0,
@@ -161,11 +144,10 @@ CREATE TABLE stats_par_zd (
     population_rurale INT DEFAULT 0,
     menages_enumeres INT DEFAULT 0,
     menages_denombres INT DEFAULT 0,
+    menages_denombres_incomplets INT DEFAULT 0,
     population_carto INT DEFAULT 0,
     population_collectee INT DEFAULT 0,
     average_deces INT DEFAULT 0,
-    
-    -- Stats population
     hommes INT DEFAULT 0,
     femmes INT DEFAULT 0,
     nb_enfants_moins_5 INT DEFAULT 0,
@@ -173,8 +155,6 @@ CREATE TABLE stats_par_zd (
     nb_visiteurs INT DEFAULT 0,
     nb_naissances_vivantes INT DEFAULT 0,
     nb_femmes_15_49 INT DEFAULT 0,
-    
-    -- Stats agricoles et émigration
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
@@ -276,6 +256,7 @@ CREATE TABLE stats_nationales (
     population_rurale INT DEFAULT 0,
     menages_enumeres INT DEFAULT 0,
     menages_denombres INT DEFAULT 0,
+    menages_denombres_incomplets INT DEFAULT 0,
     population_carto INT DEFAULT 0,
     population_collectee INT DEFAULT 0,
     average_deces INT DEFAULT 0,

@@ -23,6 +23,7 @@ UPDATE stats_nationales SET
     population_rurale = (SELECT SUM(XM40) FROM tmenage WHERE xm01 = 2),
     menages_enumeres = (SELECT COUNT(*) FROM tmenage WHERE xm30 > 0),
     menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 1),
+    menages_denombres_incomplets = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 2),
     population_carto = (SELECT sum(zd_pop) FROM zd),
     population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
     
@@ -114,6 +115,7 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces -- SOMME DES DÉCÈS
@@ -196,6 +198,7 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto, 
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
@@ -274,6 +277,7 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces
@@ -364,6 +368,7 @@ FROM
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(SUM(d01), 0) as total_deces

@@ -21,14 +21,14 @@ UPDATE stats_nationales SET
     nb_menages_plus_10 = (SELECT COUNT(*) FROM tmenage WHERE xm40 > 10),
     nb_menages_solo = (SELECT COUNT(*) FROM tmenage WHERE xm40 = 1),
     population_rurale = (SELECT SUM(XM40) FROM tmenage WHERE xm01 = 2),
-    menages_enumeres = (SELECT COUNT(*) FROM tmenage WHERE xm30 > 0),
+    menages_enumeres = (SELECT COUNT(*) FROM tmenage WHERE men_exist_denombrement > 0),
     menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 1),
     menages_denombres_incomplets = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 2),
     population_carto = (SELECT sum(zd_pop) FROM zd),
     population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
     
     -- Requete nouvelle ajouté
-    average_deces = (SELECT COALESCE(COUNT(d00), 0) FROM tmenage),
+    average_deces = (SELECT COUNT(*) FROM tmenage where d00=1),
     
     -- Stats population
     hommes = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 1),
@@ -40,7 +40,7 @@ UPDATE stats_nationales SET
     nb_femmes_15_49 = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2 AND c06 BETWEEN 15 AND 49),
     
     -- Stats agricoles et émigration
-    menages_agricoles = (SELECT COUNT(DISTINCT `level-1-id`) FROM tagriculture),
+    menages_agricoles = (SELECT COUNT(*) FROM tmenage where ag01=1),
     -- Correction : On joint temigration avec tmenage pour exclure les orphelins
     total_emigres = (
         SELECT COUNT(e.em02) 
@@ -50,9 +50,8 @@ UPDATE stats_nationales SET
     
     -- Correction : On compte les ménages distincts présents dans les deux tables
     menages_avec_emigres = (
-        SELECT COUNT(DISTINCT e.`level-1-id`) 
-        FROM temigration e 
-        INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+        SELECT COUNT(*) 
+        FROM tmenage e where e.em00=1
     ),
     
     date_maj = NOW()
@@ -76,7 +75,7 @@ INSERT INTO stats_par_region (
     average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets
 )
 SELECT 
     H.code_region,
@@ -104,7 +103,7 @@ SELECT
     -- Données Agriculture (A) et Emigration (E)
     COALESCE(A.menages_agricoles, 0),
     COALESCE(E.total_emigres, 0),
-    COALESCE(E.menages_avec_emigres, 0)
+    COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets
 FROM 
     -- 1. Agrégation Ménages (Source fiable) okk
     (SELECT 
@@ -141,18 +140,16 @@ FROM
     ) P ON H.code_region = P.code_region
     -- 3. Jointure Agriculture
     LEFT JOIN (
-        SELECT m.code_region, COUNT(DISTINCT a.`level-1-id`) as menages_agricoles
-        FROM tagriculture a
-        INNER JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
+        SELECT m.code_region, COUNT(*) as menages_agricoles
+        FROM tmenage m where m.ag01=1
         GROUP BY m.code_region
     ) A ON H.code_region = A.code_region
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.code_region, 
-               COALESCE(COUNT(e.em02), 0) as total_emigres,
-               COUNT(DISTINCT  e.`level-1-id` ) as menages_avec_emigres
-        FROM temigration e
-        INNER JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+               COALESCE(sum(m.em01), 0) as total_emigres,
+               COUNT(*) as menages_avec_emigres
+        FROM tmenage m where m.em00=1
         GROUP BY m.code_region
     ) E ON H.code_region = E.code_region
     -- 5. Jointure avec zd
@@ -180,7 +177,7 @@ INSERT INTO stats_par_departement (
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets
 )
 SELECT 
     H.code_region, H.code_departement, H.departement,
@@ -190,7 +187,7 @@ SELECT
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
     COALESCE(P.nb_residents_absents, 0), COALESCE(P.nb_visiteurs, 0),
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0)
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),  H.menages_denombres_incomplets
 FROM 
     (SELECT 
         code_region, code_departement, departement,
@@ -218,14 +215,14 @@ FROM
         GROUP BY m.code_departement
     ) P ON H.code_departement = P.code_departement
     LEFT JOIN (
-        SELECT m.code_departement, COUNT(DISTINCT m.`level-1-id`) as menages_agricoles
-        FROM tagriculture a JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
+        SELECT m.code_departement, COUNT(*) as menages_agricoles
+       FROM tmenage m where m.ag01=1
         GROUP BY m.code_departement
     ) A ON H.code_departement = A.code_departement
     LEFT JOIN (
-        SELECT m.code_departement, COALESCE(COUNT(e.em02), 0) as total_emigres,
-               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
-        FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+        SELECT m.code_departement,  COALESCE(sum(m.em01), 0) as total_emigres,
+               COUNT(*) as menages_avec_emigres 
+        FROM tmenage m where m.em00=1
         GROUP BY m.code_departement
     ) E ON H.code_departement = E.code_departement
      -- 5. Jointure avec zd
@@ -254,7 +251,7 @@ INSERT INTO stats_par_commune (
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets
 )
 SELECT 
     H.code_region, H.code_departement, H.code_commune, H.commune,
@@ -268,7 +265,7 @@ SELECT
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
     
     -- Agriculture (A) & Emigration (E)
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0)
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),   H.menages_denombres_incomplets
 FROM 
     -- 1. Agrégation Ménages
     (SELECT 
@@ -304,18 +301,17 @@ FROM
 
     -- 3. Jointure Agriculture
     LEFT JOIN (
-        SELECT m.code_commune, COUNT(DISTINCT m.`level-1-id`) as menages_agricoles
-        FROM tagriculture a JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
+        SELECT m.code_commune, COUNT(*) as menages_agricoles
+       FROM tmenage m where m.ag01=1
         GROUP BY m.code_commune
     ) A ON H.code_commune = A.code_commune
 
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.code_commune, 
-               COALESCE(COUNT(e.em02), 0) as total_emigres,
-               -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
-               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
-        FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+               COALESCE(sum(m.em01), 0) as total_emigres,
+               COUNT(*) as menages_avec_emigres 
+        FROM tmenage m 
         GROUP BY m.code_commune
     ) E ON H.code_commune = E.code_commune
     -- 5. Jointure avec zd
@@ -346,7 +342,7 @@ INSERT INTO stats_par_zd (
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets
 )
 SELECT 
     H.code_region, H.code_departement, H.code_commune, H.mo_zd,
@@ -360,7 +356,7 @@ SELECT
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
     
     -- Agriculture (A) & Emigration (E)
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0)
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),   H.menages_denombres_incomplets
 FROM 
     -- 1. Agrégation Ménages
     (SELECT 
@@ -396,18 +392,17 @@ FROM
 
     -- 3. Jointure Agriculture
     LEFT JOIN (
-        SELECT m.mo_zd, COUNT(DISTINCT m.`level-1-id`) as menages_agricoles
-        FROM tagriculture a JOIN tmenage m ON m.`level-1-id` = a.`level-1-id`
+        SELECT m.mo_zd, COUNT(*) as menages_agricoles
+       FROM tmenage m where m.ag01=1
         GROUP BY m.mo_zd
     ) A ON H.mo_zd = A.mo_zd
 
     -- 4. Jointure Emigration
     LEFT JOIN (
         SELECT m.mo_zd, 
-               COALESCE(COUNT(e.em02), 0) as total_emigres,
-               -- COUNT(DISTINCT CASE WHEN e.em02 > 0 THEN e.`level-1-id` END) as menages_avec_emigres
-               COUNT(DISTINCT m.`level-1-id`) as menages_avec_emigres
-        FROM temigration e JOIN tmenage m ON m.`level-1-id` = e.`level-1-id`
+                COALESCE(sum(m.em01), 0) as total_emigres,
+               COUNT(*) as menages_avec_emigres e
+        FROM tmenage m
         GROUP BY m.mo_zd
     ) E ON H.mo_zd = E.mo_zd
     -- 5. Jointure avec zd

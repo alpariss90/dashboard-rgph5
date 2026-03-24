@@ -73,7 +73,7 @@ INSERT INTO stats_par_region (
     total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
     population_rurale, menages_enumeres, menages_denombres,
     population_carto, population_collectee,
-    average_deces, -- On stocke la SOMME ici
+    average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
     menages_agricoles, total_emigres, menages_avec_emigres
@@ -91,7 +91,8 @@ SELECT
     H.menages_denombres,
     J.population_carto,
     H.population_collectee,
-    H.total_deces, -- Insertion de la somme
+    H.average_deces,
+    
     -- Données venant de la table Population (P)
     COALESCE(P.hommes, 0),
     COALESCE(P.femmes, 0),
@@ -118,7 +119,8 @@ FROM
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces -- SOMME DES DÉCÈS
+        COALESCE(COUNT(d00), 0) as average_deces
+        
      FROM tmenage 
      GROUP BY code_region, region
     ) H
@@ -184,7 +186,7 @@ SELECT
     H.code_region, H.code_departement, H.departement,
     J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    J.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee, H.average_deces,
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
     COALESCE(P.nb_residents_absents, 0), COALESCE(P.nb_visiteurs, 0),
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
@@ -201,7 +203,7 @@ FROM
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto, 
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces
+        COALESCE(COUNT(d00), 0) as average_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
     LEFT JOIN (
         SELECT m.code_departement,
@@ -258,7 +260,7 @@ SELECT
     H.code_region, H.code_departement, H.code_commune, H.commune,
     J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    J.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee,H.average_deces,
     
     -- Population (P)
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
@@ -280,7 +282,8 @@ FROM
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces
+        COALESCE(COUNT(d00), 0) as average_deces
+        
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, commune
     ) H
@@ -349,7 +352,7 @@ SELECT
     H.code_region, H.code_departement, H.code_commune, H.mo_zd,
     J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    J.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee,H.average_deces,
     
     -- Population (P)
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
@@ -371,7 +374,8 @@ FROM
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces
+        COALESCE(COUNT(d00), 0) as average_deces
+        
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, mo_zd
     ) H

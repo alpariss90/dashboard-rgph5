@@ -36,7 +36,7 @@ UPDATE stats_nationales SET
     nb_enfants_moins_5 = (SELECT COUNT(*) FROM tcaracteristique WHERE c06 < 5),
     nb_residents_absents = (SELECT COUNT(*) FROM tcaracteristique c INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id` WHERE c.c04 = 2),
     nb_visiteurs = (SELECT COUNT(*) FROM tcaracteristique c INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id` WHERE c.c04 = 3),
-    nb_naissances_vivantes = (SELECT COALESCE(SUM(c30t), 0) FROM tcaracteristique WHERE c30t > 0),
+    nb_naissances_vivantes = (SELECT COALESCE(SUM(c27t), 0) FROM tcaracteristique WHERE c27t > 0),
     nb_femmes_15_49 = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2 AND c06 BETWEEN 15 AND 49),
     
     -- Stats agricoles et émigration
@@ -72,7 +72,7 @@ INSERT INTO stats_par_region (
     total_menages, total_population, nb_menages_plus_10, nb_menages_solo,
     population_rurale, menages_enumeres, menages_denombres,
     population_carto, population_collectee,
-    average_deces, -- On stocke la SOMME ici
+    average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
     menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets
@@ -90,7 +90,8 @@ SELECT
     H.menages_denombres,
     J.population_carto,
     H.population_collectee,
-    H.total_deces, -- Insertion de la somme
+    H.average_deces,
+    
     -- Données venant de la table Population (P)
     COALESCE(P.hommes, 0),
     COALESCE(P.femmes, 0),
@@ -112,12 +113,13 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces -- SOMME DES DÉCÈS
+        COALESCE(COUNT(d00), 0) as average_deces
+        
      FROM tmenage 
      GROUP BY code_region, region
     ) H
@@ -130,7 +132,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c
         INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
@@ -181,7 +183,7 @@ SELECT
     H.code_region, H.code_departement, H.departement,
     J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    J.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee, H.average_deces,
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
     COALESCE(P.nb_residents_absents, 0), COALESCE(P.nb_visiteurs, 0),
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
@@ -193,12 +195,12 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto, 
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces
+        COALESCE(COUNT(d00), 0) as average_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
     LEFT JOIN (
         SELECT m.code_departement,
@@ -207,7 +209,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.code_departement
@@ -255,7 +257,7 @@ SELECT
     H.code_region, H.code_departement, H.code_commune, H.commune,
     J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    J.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee,H.average_deces,
     
     -- Population (P)
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
@@ -272,12 +274,13 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces
+        COALESCE(COUNT(d00), 0) as average_deces
+        
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, commune
     ) H
@@ -290,7 +293,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.code_commune
@@ -345,7 +348,7 @@ SELECT
     H.code_region, H.code_departement, H.code_commune, H.mo_zd,
     J.total_menages_attendu, H.total_menages, H.total_population, H.nb_menages_plus_10, H.nb_menages_solo,
     H.population_rurale, H.menages_enumeres, H.menages_denombres,
-    J.population_carto, H.population_collectee, H.total_deces,
+    J.population_carto, H.population_collectee,H.average_deces,
     
     -- Population (P)
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
@@ -362,12 +365,13 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(SUM(d01), 0) as total_deces
+        COALESCE(COUNT(d00), 0) as average_deces
+        
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, mo_zd
     ) H
@@ -380,7 +384,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.mo_zd
@@ -397,7 +401,7 @@ FROM
     LEFT JOIN (
         SELECT m.mo_zd, 
                 COALESCE(sum(m.em01), 0) as total_emigres,
-               COUNT(*) as menages_avec_emigres e
+               COUNT(*) as menages_avec_emigres
         FROM tmenage m
         GROUP BY m.mo_zd
     ) E ON H.mo_zd = E.mo_zd
@@ -645,6 +649,8 @@ UNION ALL
 SELECT 'stats_par_departement', COUNT(*) FROM stats_par_departement
 UNION ALL
 SELECT 'stats_par_commune', COUNT(*) FROM stats_par_commune
+UNION ALL
+SELECT 'stats_par_zd', COUNT(*) FROM stats_par_zd
 UNION ALL
 SELECT 'pyramide_ages_nationale', COUNT(*) FROM pyramide_ages_nationale
 UNION ALL

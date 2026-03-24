@@ -84,6 +84,7 @@ function getDefaultStats() {
     menagesDenombres: 0,
     menagesDenombresIncomplets: 0,
     enmcd: { ecart: 0 },
+    enmcdv: { ecart: 0 },
     cartographie: 0,
     collectee: 0,
     tauxProgressionCollecte: 0,
@@ -163,6 +164,9 @@ async function getMainStats(filters = {}, user = null) {
       menagesAttendus: Number(row.total_menages_attendu || 0),
       enmcd: { 
         ecart: Number(row.menages_enumeres || 0) - Number(row.menages_denombres || 0)
+      },
+      enmcdv: { 
+        ecartCarto: Number(row.total_menages_attendu || 0) - Number(row.menages_denombres || 0)
       },
       cartographie: Number(row.population_carto || 0),
       collectee: Number(row.population_collectee || 0),

@@ -170,10 +170,8 @@ async function getMainStats(filters = {}, user = null) {
       },
       cartographie: Number(row.population_carto || 0),
       collectee: Number(row.population_collectee || 0),
-      tauxProgressionCollecte:
-        row.population_carto > 0
-          ? Number(((row.population_collectee / row.population_carto) * 100).toFixed(2))
-          : 0,
+      tauxProgressionCollecte: Number(((row.menages_denombres / row.total_menages_attendu) * 100).toFixed(2))
+          ,
       tailleMoyenneMenage:
         row.total_menages > 0
           ? Number((row.total_population / row.total_menages).toFixed(2))

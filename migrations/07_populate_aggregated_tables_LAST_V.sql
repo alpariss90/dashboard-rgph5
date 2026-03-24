@@ -36,7 +36,7 @@ UPDATE stats_nationales SET
     nb_enfants_moins_5 = (SELECT COUNT(*) FROM tcaracteristique WHERE c06 < 5),
     nb_residents_absents = (SELECT COUNT(*) FROM tcaracteristique c INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id` WHERE c.c04 = 2),
     nb_visiteurs = (SELECT COUNT(*) FROM tcaracteristique c INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id` WHERE c.c04 = 3),
-    nb_naissances_vivantes = (SELECT COALESCE(SUM(c30t), 0) FROM tcaracteristique WHERE c30t > 0),
+    nb_naissances_vivantes = (SELECT COALESCE(SUM(c27t), 0) FROM tcaracteristique WHERE c27t > 0),
     nb_femmes_15_49 = (SELECT COUNT(*) FROM tcaracteristique WHERE c03 = 2 AND c06 BETWEEN 15 AND 49),
     
     -- Stats agricoles et émigration
@@ -113,7 +113,7 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
@@ -132,7 +132,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c
         INNER JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
@@ -195,7 +195,7 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto, 
@@ -209,7 +209,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.code_departement
@@ -274,7 +274,7 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
@@ -293,7 +293,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.code_commune
@@ -365,7 +365,7 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm30 > 0 THEN 1 ELSE 0 END) as menages_enumeres,
+        SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         -- COALESCE(SUM(xm20), 0) as population_carto,
@@ -384,7 +384,7 @@ FROM
             SUM(CASE WHEN c.c06 < 5 THEN 1 ELSE 0 END) as nb_enfants_moins_5,
             SUM(CASE WHEN c.c04 = 2 THEN 1 ELSE 0 END) as nb_residents_absents,
             SUM(CASE WHEN c.c04 = 3 THEN 1 ELSE 0 END) as nb_visiteurs,
-            SUM(CASE WHEN c.c30t > 0 THEN c.c30t ELSE 0 END) as nb_naissances_vivantes,
+            SUM(CASE WHEN c.c27t > 0 THEN c.c27t ELSE 0 END) as nb_naissances_vivantes,
             SUM(CASE WHEN c.c03 = 2 AND c.c06 BETWEEN 15 AND 49 THEN 1 ELSE 0 END) as nb_femmes_15_49
         FROM tcaracteristique c JOIN tmenage m ON m.`level-1-id` = c.`level-1-id`
         GROUP BY m.mo_zd
@@ -401,7 +401,7 @@ FROM
     LEFT JOIN (
         SELECT m.mo_zd, 
                 COALESCE(sum(m.em01), 0) as total_emigres,
-               COUNT(*) as menages_avec_emigres e
+               COUNT(*) as menages_avec_emigres
         FROM tmenage m
         GROUP BY m.mo_zd
     ) E ON H.mo_zd = E.mo_zd
@@ -649,6 +649,8 @@ UNION ALL
 SELECT 'stats_par_departement', COUNT(*) FROM stats_par_departement
 UNION ALL
 SELECT 'stats_par_commune', COUNT(*) FROM stats_par_commune
+UNION ALL
+SELECT 'stats_par_zd', COUNT(*) FROM stats_par_zd
 UNION ALL
 SELECT 'pyramide_ages_nationale', COUNT(*) FROM pyramide_ages_nationale
 UNION ALL

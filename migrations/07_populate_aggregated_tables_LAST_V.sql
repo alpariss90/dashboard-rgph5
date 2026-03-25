@@ -27,7 +27,7 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
         population_carto = (SELECT sum(zd_pop) FROM zd),
         population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
         menages_ajoutes = (SELECT COUNT(*) FROM tmenage WHERE men_exist_denombrement=2),
-        cas_refus = (SELECT COUNT(*) FROM tmenage WHERE xm10 = 1),
+        cas_refus = (SELECT COUNT(*) FROM tmenage WHERE xm10 > 0),
         -- Requete nouvelle ajouté
         average_deces = (SELECT COUNT(*) FROM tmenage where d00 = 1),
         
@@ -117,7 +117,7 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
             SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
             SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
             SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-            SUM(CASE WHEN xm10 = 1 THEN 1 ELSE 0 END) as cas_refus,
+            SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
             COALESCE(SUM(xm40), 0) as population_collectee,
             SUM(CASE WHEN d00 = 1 THEN 1 ELSE 0 END ) as average_deces
             
@@ -207,7 +207,7 @@ FROM
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-        SUM(CASE WHEN xm10 = 1 THEN 1 ELSE 0 END) as cas_refus,
+        SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(COUNT(d00), 0) as average_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
@@ -295,7 +295,7 @@ FROM
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-        SUM(CASE WHEN xm10 = 1 THEN 1 ELSE 0 END) as cas_refus,
+        SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(COUNT(d00), 0) as average_deces
@@ -396,7 +396,7 @@ FROM
         SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
         SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
         SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-        SUM(CASE WHEN xm10 = 1 THEN 1 ELSE 0 END) as cas_refus,
+        SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
         COALESCE(COUNT(d00), 0) as average_deces

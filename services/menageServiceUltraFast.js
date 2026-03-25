@@ -83,6 +83,7 @@ function getDefaultStats() {
     menagesEnumeres: 0,
     menagesDenombres: 0,
     menagesDenombresIncomplets: 0,
+    menagesAjoutes : 0,
     enmcd: { ecart: 0 },
     enmcdv: { ecart: 0 },
     cartographie: 0,
@@ -157,10 +158,13 @@ async function getMainStats(filters = {}, user = null) {
       averageDeces: Number(row.average_deces || 0),
       nbMenagesPlus10: Number(row.nb_menages_plus_10 || 0),
       nbMenagesSolo: Number(row.nb_menages_solo || 0),
-      populationRurale: Number(row.population_rurale || 0),
+      populationRurale: Number(row.cas_refus || 0),
       menagesEnumeres: Number(row.menages_enumeres || 0),
       menagesDenombres: Number(row.menages_denombres || 0),
       menagesDenombresIncomplets: Number(row.menages_denombres_incomplets || 0),
+      menagesAjoutes: Number(row.menages_ajoutes || 0),
+      menagesSupprimes: Number(row.menages_supprimes || 0),
+
       menagesAttendus: Number(row.total_menages_attendu || 0),
       enmcd: { 
         ecart: Number(row.menages_enumeres || 0) - Number(row.menages_denombres || 0)
@@ -170,10 +174,8 @@ async function getMainStats(filters = {}, user = null) {
       },
       cartographie: Number(row.population_carto || 0),
       collectee: Number(row.population_collectee || 0),
-      tauxProgressionCollecte:
-        row.population_carto > 0
-          ? Number(((row.population_collectee / row.population_carto) * 100).toFixed(2))
-          : 0,
+      tauxProgressionCollecte: Number(((row.menages_denombres / row.total_menages_attendu) * 100).toFixed(2))
+          ,
       tailleMoyenneMenage:
         row.total_menages > 0
           ? Number((row.total_population / row.total_menages).toFixed(2))

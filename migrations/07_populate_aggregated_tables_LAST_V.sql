@@ -209,7 +209,7 @@ FROM
         SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
         SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(COUNT(d00), 0) as average_deces
+        SUM(CASE WHEN d00 =1 THEN 1 ELSE 0 END) as average_deces as average_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
     LEFT JOIN (
         SELECT m.code_departement,
@@ -298,7 +298,7 @@ FROM
         SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(COUNT(d00), 0) as average_deces
+        SUM(CASE WHEN d00 =1 THEN 1 ELSE 0 END) as average_deces as average_deces
         
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, commune
@@ -399,7 +399,7 @@ FROM
         SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(COUNT(d00), 0) as average_deces
+        SUM(CASE WHEN d00 =1 THEN 1 ELSE 0 END) as average_deces
         
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, mo_zd

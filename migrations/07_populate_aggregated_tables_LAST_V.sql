@@ -426,7 +426,7 @@ SELECT
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
     
     -- Agriculture (A) & Emigration (E)
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets, k.menages_ajoutes, H.cas_refus, I.menages_non_existe
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets, K.menages_ajoutes, H.cas_refus, I.menages_non_existe
 FROM 
     -- 1. Agrégation Ménages
     (SELECT 

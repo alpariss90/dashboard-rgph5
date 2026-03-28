@@ -84,6 +84,7 @@ function getDefaultStats() {
     menagesDenombres: 0,
     menagesDenombresIncomplets: 0,
     menagesAjoutes : 0,
+    menagesNexistePlus : 0,
     enmcd: { ecart: 0 },
     enmcdv: { ecart: 0 },
     cartographie: 0,
@@ -163,6 +164,7 @@ async function getMainStats(filters = {}, user = null) {
       menagesDenombres: Number(row.menages_denombres || 0),
       menagesDenombresIncomplets: Number(row.menages_denombres_incomplets || 0),
       menagesAjoutes: Number(row.menages_ajoutes || 0),
+      menagesNexistePlus: Number(row.menages_non_existe || 0),
       menagesSupprimes: Number(row.menages_supprimes || 0),
 
       menagesAttendus: Number(row.total_menages_attendu || 0),

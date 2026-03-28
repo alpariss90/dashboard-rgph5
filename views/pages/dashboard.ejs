@@ -640,6 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
     departement: document.getElementById('departement'),
     commune: document.getElementById('commune'),
     zd: document.getElementById('zd'),
+    codeAgent: document.getElementById('code_agent'),
     refreshBtn: document.getElementById('refreshAll')
   };
   
@@ -939,6 +940,9 @@ async function updateStats() {
         selects.zd.disabled = false;
       }
 
+      // Réinitialiser le code agent
+      if (selects.codeAgent) selects.codeAgent.value = '';
+
       if (selects.region.value) {
         console.log('📥 Chargement départements pour région:', selects.region.value);
         await loadOptions(`/api/location/departements?region=${selects.region.value}`, 
@@ -987,6 +991,9 @@ async function updateStats() {
         selects.zd.disabled = false;
       }
 
+      // Réinitialiser le code agent
+      if (selects.codeAgent) selects.codeAgent.value = '';
+
       if (selects.departement.value) {
         console.log('📥 Chargement communes pour département:', selects.departement.value);
         await loadOptions(`/api/location/communes?departement=${selects.departement.value}`, 
@@ -1007,6 +1014,9 @@ async function updateStats() {
         selects.zd.disabled = false;
       }
 
+      // Réinitialiser le code agent quand commune change
+      if (selects.codeAgent) selects.codeAgent.value = '';
+
       if (selects.commune.value) {
         console.log('📥 Chargement ZDs pour commune:', selects.commune.value);
         await loadOptions(`/api/location/zds?commune=${selects.commune.value}`, 
@@ -1017,9 +1027,29 @@ async function updateStats() {
     });
   }
 
+  // ✅ Charge les agents associés à la ZD sélectionnée
+  async function loadAgentForZd(zdValue) {
+    if (!selects.codeAgent) return;
+    if (!zdValue) {
+      selects.codeAgent.value = '';
+      return;
+    }
+    try {
+      const response = await fetch(`/api/location/agents-by-zd?zd=${encodeURIComponent(zdValue)}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      selects.codeAgent.value = data.agents || '';
+      console.log('👤 Agents pour ZD', zdValue, ':', data.agents);
+    } catch (err) {
+      console.error('❌ Erreur chargement agents:', err);
+      selects.codeAgent.value = '';
+    }
+  }
+
   if (isActiveSelect(selects.zd)) {
-    selects.zd.addEventListener('change', (e) => {
+    selects.zd.addEventListener('change', async (e) => {
       console.log('🔘 ZD changée:', e.target.value);
+      await loadAgentForZd(e.target.value);
       debouncedUpdateStats();
     });
   }
@@ -1232,6 +1262,12 @@ async function updateStats() {
         }
       }
       
+      // ===== Charger l'agent si une ZD est déjà sélectionnée =====
+      const zdInitial = getSelectValue('zd');
+      if (zdInitial) {
+        await loadAgentForZd(zdInitial);
+      }
+
       // ===== Initialiser les stats (pour TOUS les rôles) =====
       console.log('📊 Initialisation des stats...');
       await updateStats();

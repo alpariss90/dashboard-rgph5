@@ -39,6 +39,7 @@ CREATE TABLE stats_par_region (
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
+    menages_non_existe INT DEFAULT 0,
     
     date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -80,7 +81,7 @@ CREATE TABLE stats_par_departement (
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
-    
+    menages_non_existe INT DEFAULT 0,
     date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     INDEX idx_code_departement (code_departement),
@@ -123,7 +124,7 @@ CREATE TABLE stats_par_commune (
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
-    
+    menages_non_existe INT DEFAULT 0,
     date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     INDEX idx_code_commune (code_commune),
@@ -166,7 +167,7 @@ CREATE TABLE stats_par_zd (
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
-    
+    menages_non_existe INT DEFAULT 0,
     date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     -- Index composite pour recherche rapide par ZD ou par Commune+ZD
@@ -284,7 +285,7 @@ CREATE TABLE stats_nationales (
     menages_agricoles INT DEFAULT 0,
     total_emigres INT DEFAULT 0,
     menages_avec_emigres INT DEFAULT 0,
-    
+    menages_non_existe INT DEFAULT 0,
     date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

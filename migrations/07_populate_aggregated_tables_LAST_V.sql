@@ -26,7 +26,7 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
         menages_denombres_incomplets = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 2),
         population_carto = (SELECT sum(zd_pop) FROM zd),
         population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
-        menages_ajoutes = (SELECT COUNT(*) FROM tmenage WHERE men_exist_denombrement=2),
+        menages_ajoutes = (SELECT COUNT(*) FROM tmenage WHERE men_exist_denombrement=2), 
         cas_refus = (SELECT COUNT(*) FROM tmenage WHERE xm10 > 0),
         -- Requete nouvelle ajouté
         average_deces = (SELECT COUNT(*) FROM tmenage where d00 = 1),

@@ -22,12 +22,13 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
         nb_menages_solo = (SELECT COUNT(*) FROM tmenage WHERE xm40 = 1),
         population_rurale = (SELECT SUM(XM40) FROM tmenage WHERE xm01 = 2),
         menages_enumeres = (SELECT COUNT(*) FROM tenumeration WHERE men_exist BETWEEN 1 AND 3),
-        menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 1),
-        menages_denombres_incomplets = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 2),
+        menages_denombres = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 1 and meta_intro=1),
+        menages_denombres_incomplets = (SELECT COUNT(*) FROM tmenage WHERE xm09 = 2 and meta_intro=1),
         population_carto = (SELECT sum(zd_pop) FROM zd),
         population_collectee = (SELECT COALESCE(SUM(xm40), 0) FROM tmenage),
-        menages_ajoutes = (SELECT COUNT(*) FROM tmenage WHERE men_exist_denombrement=2),
-        cas_refus = (SELECT COUNT(*) FROM tmenage WHERE xm10 > 0),
+        menages_ajoutes = (SELECT COUNT(*) FROM tenumeration WHERE men_exist=2), 
+        menages_non_existe = (SELECT COUNT(*) FROM tenumeration WHERE men_exist=3), 
+        cas_refus = (SELECT COUNT(*) FROM tmenage WHERE meta_intro=2),
         -- Requete nouvelle ajouté
         average_deces = (SELECT COUNT(*) FROM tmenage where d00 = 1),
         
@@ -76,7 +77,7 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
         average_deces,
         hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
         nb_naissances_vivantes, nb_femmes_15_49,
-        menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets, menages_ajoutes, cas_refus
+        menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets, menages_ajoutes, cas_refus, menages_non_existe
     )
     SELECT 
         H.code_region,
@@ -104,7 +105,7 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
         -- Données Agriculture (A) et Emigration (E)
         COALESCE(A.menages_agricoles, 0),
         COALESCE(E.total_emigres, 0),
-        COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets, H.menages_ajoutes, H.cas_refus
+        COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets, K.menages_ajoutes, H.cas_refus, I.menages_non_existe
     FROM 
         -- 1. Agrégation Ménages (Source fiable) okk
         (SELECT 
@@ -114,10 +115,10 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
             SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
             SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
             SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-            SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-            SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
-            SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-            SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
+            SUM(CASE WHEN ( xm09 = 1 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres,
+            SUM(CASE WHEN (xm09 = 2 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres_incomplets,
+            -- SUM(CASE WHEN men_exist = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
+            SUM(CASE WHEN meta_intro = 2 THEN 1 ELSE 0 END) as cas_refus,
             COALESCE(SUM(xm40), 0) as population_collectee,
             SUM(CASE WHEN d00 = 1 THEN 1 ELSE 0 END ) as average_deces
             
@@ -168,7 +169,21 @@ SELECT '📊 fin insertion des donnees dans tlevel1...' AS status;
                     sum(e.zd_pop) as population_carto
             FROM zd e
             GROUP BY substr(e.zd_zd, 1,1)
-        ) J ON H.code_region = J.code_region;
+        ) J ON H.code_region = J.code_region
+
+        LEFT JOIN (
+            SELECT  substr(e.men_zd, 1,1) as code_region, 
+                count(e.men_zd) as menages_non_existe
+            FROM tenumeration e where men_exist=3
+            GROUP BY substr(e.men_zd, 1,1)
+        ) I ON H.code_region = I.code_region
+
+         LEFT JOIN (
+            SELECT  substr(e.men_zd, 1,1) as code_region, 
+                count(e.men_zd) as menages_ajoutes
+            FROM tenumeration e where men_exist=2
+            GROUP BY substr(e.men_zd, 1,1)
+        ) K ON H.code_region = I.code_region;
 
 SELECT '✅ Stats par région CORRIGÉES (Join)' AS status;
 
@@ -186,7 +201,7 @@ INSERT INTO stats_par_departement (
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets, menages_ajoutes, cas_refus
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets, menages_ajoutes, cas_refus, menages_non_existe
 )
 SELECT 
     H.code_region, H.code_departement, H.departement,
@@ -196,7 +211,7 @@ SELECT
     COALESCE(P.hommes, 0), COALESCE(P.femmes, 0), COALESCE(P.nb_enfants_moins_5, 0),
     COALESCE(P.nb_residents_absents, 0), COALESCE(P.nb_visiteurs, 0),
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),  H.menages_denombres_incomplets, H.menages_ajoutes, H.cas_refus
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),  H.menages_denombres_incomplets, K.menages_ajoutes, H.cas_refus, I.menages_non_existe
 FROM 
     (SELECT 
         code_region, code_departement, departement,
@@ -204,12 +219,12 @@ FROM
         SUM(CASE WHEN xm40 > 10 THEN 1 ELSE 0 END) as nb_menages_plus_10,
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
-        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
-        SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-        SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
+        SUM(CASE WHEN ( xm09 = 1 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN (xm09 = 2 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres_incomplets,
+        -- SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
+        SUM(CASE WHEN meta_intro = 2 THEN 1 ELSE 0 END) as cas_refus,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(COUNT(d00), 0) as average_deces
+        SUM(CASE WHEN d00 =1 THEN 1 ELSE 0 END)  as average_deces
      FROM tmenage GROUP BY code_region, code_departement, departement) H
     LEFT JOIN (
         SELECT m.code_departement,
@@ -249,7 +264,21 @@ FROM
                 sum(e.zd_pop) as population_carto
         FROM zd e
         GROUP BY substr(e.zd_zd, 1,3)
-    ) J ON H.code_departement = J.code_departement;
+    ) J ON H.code_departement = J.code_departement
+
+    LEFT JOIN (
+            SELECT  substr(e.men_zd, 1,3) as code_departement, 
+                count(e.men_zd) as menages_non_existe
+            FROM tenumeration e where men_exist=3
+            GROUP BY substr(e.men_zd, 1,3)
+        ) I ON  H.code_departement = I.code_departement
+
+        LEFT JOIN (
+            SELECT  substr(e.men_zd, 1,3) as code_departement, 
+                count(e.men_zd) as menages_ajoutes
+            FROM tenumeration e where men_exist=2
+            GROUP BY substr(e.men_zd, 1,3)
+        ) K ON  H.code_departement = I.code_departement;
 
 SELECT '✅ Stats par département CORRIGÉES' AS status;
 
@@ -268,7 +297,7 @@ INSERT INTO stats_par_commune (
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets,menages_ajoutes, cas_refus
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets,menages_ajoutes, cas_refus,menages_non_existe
 )
 SELECT 
     H.code_region, H.code_departement, H.code_commune, H.commune,
@@ -282,7 +311,7 @@ SELECT
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
     
     -- Agriculture (A) & Emigration (E)
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),   H.menages_denombres_incomplets, H.menages_ajoutes, H.cas_refus
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0),   H.menages_denombres_incomplets, K.menages_ajoutes, H.cas_refus, I.menages_non_existe
 FROM 
     -- 1. Agrégation Ménages
     (SELECT 
@@ -292,13 +321,13 @@ FROM
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         -- SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
-        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
-        SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-        SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
+         SUM(CASE WHEN ( xm09 = 1 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN (xm09 = 2 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres_incomplets,
+        -- SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
+        SUM(CASE WHEN meta_intro = 2 THEN 1 ELSE 0 END) as cas_refus,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(COUNT(d00), 0) as average_deces
+        SUM(CASE WHEN d00 =1 THEN 1 ELSE 0 END)  as average_deces
         
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, commune
@@ -348,7 +377,21 @@ FROM
                 sum(e.zd_pop) as population_carto
         FROM zd e
         GROUP BY e.zd_commune
-    ) J ON H.code_commune = J.code_commune;
+    ) J ON H.code_commune = J.code_commune
+
+     LEFT JOIN (
+            SELECT  substr(e.men_zd, 1,5) as code_commune, 
+                count(e.men_zd) as menages_non_existe
+            FROM tenumeration e where men_exist=3
+            GROUP BY substr(e.men_zd, 1,5)
+        ) I ON  H.code_commune = I.code_commune
+
+        LEFT JOIN (
+            SELECT  substr(e.men_zd, 1,5) as code_commune, 
+                count(e.men_zd) as menages_ajoutes
+            FROM tenumeration e where men_exist=2
+            GROUP BY substr(e.men_zd, 1,5)
+        ) K ON  H.code_commune = I.code_commune;
 
 SELECT '✅ Stats par commune CORRIGÉES (Join)' AS status;
 
@@ -369,7 +412,7 @@ INSERT INTO stats_par_zd (
     population_carto, population_collectee, average_deces,
     hommes, femmes, nb_enfants_moins_5, nb_residents_absents, nb_visiteurs,
     nb_naissances_vivantes, nb_femmes_15_49,
-    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets, menages_ajoutes, cas_refus
+    menages_agricoles, total_emigres, menages_avec_emigres, menages_denombres_incomplets, menages_ajoutes, cas_refus, menages_non_existe
 )
 SELECT 
     H.code_region, H.code_departement, H.code_commune, H.mo_zd,
@@ -383,7 +426,7 @@ SELECT
     COALESCE(P.nb_naissances_vivantes, 0), COALESCE(P.nb_femmes_15_49, 0),
     
     -- Agriculture (A) & Emigration (E)
-    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets, H.menages_ajoutes, H.cas_refus
+    COALESCE(A.menages_agricoles, 0), COALESCE(E.total_emigres, 0), COALESCE(E.menages_avec_emigres, 0), H.menages_denombres_incomplets, k.menages_ajoutes, H.cas_refus, I.menages_non_existe
 FROM 
     -- 1. Agrégation Ménages
     (SELECT 
@@ -393,13 +436,13 @@ FROM
         SUM(CASE WHEN xm40 = 1 THEN 1 ELSE 0 END) as nb_menages_solo,
         SUM(CASE WHEN xm01 = 2 THEN 1 ELSE 0 END) as population_rurale,
         -- SUM(CASE WHEN men_exist_denombrement > 0 THEN 1 ELSE 0 END) as menages_enumeres,
-        SUM(CASE WHEN xm09 = 1 THEN 1 ELSE 0 END) as menages_denombres,
-        SUM(CASE WHEN xm09 = 2 THEN 1 ELSE 0 END) as menages_denombres_incomplets,
-        SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
-        SUM(CASE WHEN xm10 > 0 THEN 1 ELSE 0 END) as cas_refus,
+         SUM(CASE WHEN ( xm09 = 1 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres,
+        SUM(CASE WHEN (xm09 = 2 and meta_intro=1) THEN 1 ELSE 0 END) as menages_denombres_incomplets,
+        -- SUM(CASE WHEN men_exist_denombrement = 2 THEN 1 ELSE 0 END) as menages_ajoutes,
+        SUM(CASE WHEN meta_intro = 2 THEN 1 ELSE 0 END) as cas_refus,
         -- COALESCE(SUM(xm20), 0) as population_carto,
         COALESCE(SUM(xm40), 0) as population_collectee,
-        COALESCE(COUNT(d00), 0) as average_deces
+        SUM(CASE WHEN d00 =1 THEN 1 ELSE 0 END) as average_deces
         
      FROM tmenage 
      GROUP BY code_region, code_departement, code_commune, mo_zd
@@ -449,7 +492,21 @@ FROM
                 sum(e.zd_pop) as population_carto
         FROM zd e
         GROUP BY e.zd_zd
-    ) J ON H.mo_zd = J.mo_zd;
+    ) J ON H.mo_zd = J.mo_zd
+
+     LEFT JOIN (
+            SELECT  e.men_zd as mo_zd, 
+                count(e.men_zd) as menages_non_existe
+            FROM tenumeration e where men_exist=3
+            GROUP BY e.men_zd
+        ) I ON  H.mo_zd = I.mo_zd
+
+         LEFT JOIN (
+            SELECT  e.men_zd as mo_zd, 
+                count(e.men_zd) as menages_ajoutes
+            FROM tenumeration e where men_exist=2
+            GROUP BY e.men_zd
+        ) K ON  H.mo_zd = I.mo_zd;
 
 SELECT '✅ Stats par ZD CORRIGÉES (Join)' AS status;
 

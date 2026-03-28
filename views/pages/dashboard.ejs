@@ -38,7 +38,7 @@
       
 <div class="row">
   <!-- Région -->
-      <div class="col-3">
+      <div class="col-2">
         <label>Région</label>
         <% if (user.canChangeRegion) { %>
           <!-- ROLE_GLOBAL : Select actif avec options préchargées -->
@@ -99,11 +99,20 @@
     </div>
   
     <!-- ZD -->
-    <div class="col-3">
+    <div class="col-2">
       <label>Zone de dénombrement (ZD)</label>
       <!-- TOUS les rôles peuvent changer de ZD -->
       <select id="zd" class="form-select">
         <option value="">-- Sélectionner --</option>
+      </select>
+    </div>
+
+    <!-- Agent -->
+    <div class="col-2">
+      <label>Code de l'agent</label>
+      <!-- TOUS les rôles peuvent changer de ZD -->
+      <select id="zd" class="form-select">
+       
       </select>
     </div>
 </div>

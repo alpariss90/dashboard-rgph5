@@ -84,6 +84,7 @@ function getDefaultStats() {
     menagesDenombres: 0,
     menagesDenombresIncomplets: 0,
     menagesAjoutes : 0,
+    menagesNexistePlus : 0,
     enmcd: { ecart: 0 },
     enmcdv: { ecart: 0 },
     cartographie: 0,
@@ -163,6 +164,7 @@ async function getMainStats(filters = {}, user = null) {
       menagesDenombres: Number(row.menages_denombres || 0),
       menagesDenombresIncomplets: Number(row.menages_denombres_incomplets || 0),
       menagesAjoutes: Number(row.menages_ajoutes || 0),
+      menagesNexistePlus: Number(row.menages_non_existe || 0),
       menagesSupprimes: Number(row.menages_supprimes || 0),
 
       menagesAttendus: Number(row.total_menages_attendu || 0),
@@ -178,7 +180,7 @@ async function getMainStats(filters = {}, user = null) {
           ,
       tailleMoyenneMenage:
         row.total_menages > 0
-          ? Number((row.total_population / row.total_menages).toFixed(2))
+          ? Number((row.total_population / (row.total_menages - Number(row.cas_refus || 0))).toFixed(2))
           : 0,
     };
   }, CACHE_TTL.STATS);
@@ -234,7 +236,7 @@ async function getPopulationStatsCombined(filters = {}, user = null) {
       hommes: hommes,
       femmes: femmes,
       total: total,
-      proportionEnfantsMoins5: total === 0 ? 0 : +((row.nb_enfants_moins_5 / total) * 100).toFixed(2),
+      proportionEnfantsMoins5: total === 0 ? 0 : +((row.nb_enfants_moins_5 /    (row.total_menages - Number(row.cas_refus || 0))  ) * 100).toFixed(2),
       RRAVI: nbVisiteurs > 0 ? Number((nbResidentsAbsents / nbVisiteurs).toFixed(2)) : 0,
       rapportMasculinite: femmes > 0 ? Number(((hommes / femmes) * 100).toFixed(2)) : 0,
       PA49: nbFemmes15_49 > 0 ? Number((nbNaissancesVivantes / nbFemmes15_49).toFixed(2)) : 0
@@ -273,7 +275,7 @@ async function getProportionMenagesAgricoles(filters = {}, user = null) {
     }
     
     if (!row || row.total_menages === 0) return 0;
-    return +((row.menages_agricoles / row.total_menages) * 100).toFixed(2);
+    return +((row.menages_agricoles / (row.total_menages  - Number(row.cas_refus || 0)) ) * 100).toFixed(2);
   }, CACHE_TTL.STATS);
 }
 
@@ -308,7 +310,8 @@ async function getAverageEmigresPerMenage(filters = {}, user = null) {
     }
     
     if (!row || row.menages_avec_emigres === 0) return 0;
-    return +(row.total_emigres / row.menages_avec_emigres).toFixed(2);
+    //return +(row.total_emigres / row.menages_avec_emigres).toFixed(2);
+    return row.menages_avec_emigres;
   }, CACHE_TTL.STATS);
 }
 
